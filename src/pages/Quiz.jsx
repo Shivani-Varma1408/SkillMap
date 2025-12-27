@@ -131,27 +131,53 @@ export default function Quiz() {
   const handleSubmit = async (finalAnswers) => {
     setLoading(true);
     
+    console.log('Quiz completed! Answers:', finalAnswers);
+    
     try {
-      // Save to Firebase
-      const docRef = await addDoc(collection(db, 'quizResults'), {
-        answers: finalAnswers,
-        timestamp: new Date(),
-      });
+      // Try to save to Firebase, but don't block if it fails
+      let quizId = 'temp-' + Date.now();
+      
+      try {
+        const docRef = await addDoc(collection(db, 'quizResults'), {
+          answers: finalAnswers,
+          timestamp: new Date(),
+        });
+        quizId = docRef.id;
+        console.log('✅ Quiz saved to Firebase with ID:', quizId);
+      } catch (fbError) {
+        console.warn('⚠️ Firebase save failed, using temp ID:', fbError);
+      }
+
+      // Store in sessionStorage as backup
+      sessionStorage.setItem('quizData', JSON.stringify({
+        quizId: quizId,
+        answers: finalAnswers
+      }));
+      
+      console.log('Navigating to roadmap with data...');
 
       // Navigate to roadmap with quiz data
       setTimeout(() => {
         navigate('/roadmap', { 
           state: { 
-            quizId: docRef.id,
+            quizId: quizId,
+            answers: finalAnswers 
+          },
+          replace: false
+        });
+      }, 1500);
+
+    } catch (error) {
+      console.error('❌ Error in quiz submission:', error);
+      // Still navigate even if there's an error
+      setTimeout(() => {
+        navigate('/roadmap', { 
+          state: { 
+            quizId: 'temp-' + Date.now(),
             answers: finalAnswers 
           } 
         });
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error saving quiz:', error);
-      alert('Oops! Something went wrong. Please try again.');
-      setLoading(false);
+      }, 500);
     }
   };
 
@@ -205,7 +231,7 @@ export default function Quiz() {
           </div>
 
           <p className="text-white/60 text-sm">
-            Trusted for finding their path
+            Trusted by 10,000+ students finding their path
           </p>
         </div>
       </div>
@@ -225,7 +251,7 @@ export default function Quiz() {
           </div>
           <div className="space-y-2">
             <p className="text-3xl font-bold">Analyzing Your Responses...</p>
-            <p className="text-xl text-white/80">Our AI is finding your perfect matches</p>
+            <p className="text-xl text-white/80">Preparing your career matches</p>
             <div className="flex items-center justify-center gap-2 mt-4">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-white rounded-full animate-pulse delay-100"></div>
