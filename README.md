@@ -23,5 +23,5 @@ This platform uses **Gemini AI** to generate custom career roadmaps, analyze ski
 |----------|------------------|
 | AI Career Engine | Google Gemini API |
 | Backend | Firebase Authentication, Firebase Realtime Database |
-| REACT |
+| Frontend | React|
 | Hosting | Firebase Hosting |
