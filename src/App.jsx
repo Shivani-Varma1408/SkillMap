@@ -4,7 +4,7 @@ import Quiz from "./pages/Quiz";
 import Roadmap from "./pages/Roadmap";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./components/Navbar";
-import RoadmapProgress from "./components/RoadmapProgress";
+import Certifications from "./pages/Certifications";
 
 
 
@@ -19,7 +19,7 @@ function App() {
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/Roadmapprogress" element={<RoadmapProgress />} />
+        <Route path="/certifications" element={<Certifications/>} />
       </Routes>
     </Router>
   );

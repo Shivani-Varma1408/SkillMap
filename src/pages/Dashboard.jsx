@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 
@@ -7,6 +8,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
   const [progress, setProgress] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadRoadmaps();
@@ -25,10 +27,8 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading roadmaps:', error);
-      // Set empty array so it doesn't hang
       setRoadmaps([]);
     } finally {
-      // Always stop loading after 3 seconds max
       setTimeout(() => setLoading(false), 100);
     }
   };
@@ -72,6 +72,45 @@ export default function Dashboard() {
     return total > 0 ? Math.round((completed / total) * 100) : 0;
   };
 
+  const navigateToCertifications = () => {
+  if (selectedRoadmap) {
+    // Extract skills from the roadmap for certifications
+    const allSkills = extractAllSkills(selectedRoadmap);
+    
+    // Get quiz data from the roadmap itself (saved earlier) or sessionStorage
+    const quizAnswers = selectedRoadmap.quizAnswers || 
+                       JSON.parse(sessionStorage.getItem('quizData'))?.answers || {};
+    
+    console.log('Navigating to certifications with:', {
+      career: selectedRoadmap.career,
+      skillsCount: allSkills.length,
+      hasQuizAnswers: Object.keys(quizAnswers).length > 0
+    });
+    
+    navigate('/certifications', {
+      state: {
+        selectedRoadmap: selectedRoadmap,
+        missingSkills: allSkills,
+        quizData: quizAnswers
+      }
+    });
+  } else {
+    alert('Please select a roadmap first');
+  }
+};
+  const extractAllSkills = (roadmap) => {
+    if (!roadmap?.roadmap?.roadmap) return [];
+    
+    const allSkills = new Set();
+    roadmap.roadmap.roadmap.forEach(month => {
+      if (month.skills && Array.isArray(month.skills)) {
+        month.skills.forEach(skill => allSkills.add(skill));
+      }
+    });
+    
+    return Array.from(allSkills);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center">
@@ -113,6 +152,17 @@ export default function Dashboard() {
           <div className="text-6xl mb-4">📊</div>
           <h1 className="text-5xl font-bold text-white mb-2">Your Dashboard</h1>
           <p className="text-xl text-white/90">Track your learning journey</p>
+          
+          {/* Certifications Button */}
+          <div className="mt-6">
+            <button
+              onClick={navigateToCertifications}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl font-bold hover:shadow-2xl transition-all hover:-translate-y-1"
+            >
+              <span className="text-2xl">🏆</span>
+              View Recommended Certifications
+            </button>
+          </div>
         </div>
 
         {/* Progress Overview */}
@@ -315,6 +365,28 @@ export default function Dashboard() {
           })}
         </div>
 
+        {/* Action Buttons */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={() => navigate('/quiz')}
+            className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+          >
+            Take New Quiz
+          </button>
+          <button
+            onClick={navigateToCertifications}
+            className="flex-1 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl font-bold hover:shadow-xl transition-all"
+          >
+            Get Certifications 🏆
+          </button>
+          <button
+            onClick={() => navigate('/roadmap')}
+            className="flex-1 py-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+          >
+            View Full Roadmap
+          </button>
+        </div>
+
         {/* Motivational Quote */}
         <div className="mt-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-3xl p-8 text-center">
           <div className="text-5xl mb-4">
@@ -335,6 +407,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-
- 
 }

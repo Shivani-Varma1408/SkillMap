@@ -63,14 +63,14 @@ export default function Navbar() {
               📊 Dashboard
             </Link>
             <Link
-              to="/Roadmapprogress"
+              to="/certifications"
               className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                isActive('//Roadmapprogress')
+                isActive('/certifications')
                   ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 shadow-lg'
                   : 'text-white hover:bg-white/10'
               }`}
             >
-              🔥Roadmap progress
+              📚Certifications
             </Link>
           </div>
         </div>
