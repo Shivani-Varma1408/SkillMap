@@ -12,6 +12,160 @@ const modelConfig = {
   },
 };
 
+// NEW FUNCTION: Generate certification recommendations
+export const generateCertifications = async (skills, careerPath, quizData) => {
+  try {
+    const model = genAI.getGenerativeModel(modelConfig);
+
+    const prompt = `Based on this career path: ${careerPath}, 
+    the user's skills: ${JSON.stringify(skills)},
+    and their quiz preferences: ${JSON.stringify(quizData)}
+    
+    Recommend REAL certification programs from reputable providers like:
+    - Microsoft (Azure, Microsoft Certified)
+    - Google (Google Cloud, Google Career Certificates)
+    - AWS (Amazon Web Services)
+    - Oracle
+    - IBM
+    - CompTIA
+    - Cisco
+    - Nvidia
+    - SAS
+    - Tableau
+    - Salesforce
+    - PMI (Project Management Institute)
+    
+    For each skill/topic, recommend 1-2 specific certifications with:
+    1. Certification name
+    2. Provider (Company/Organization)
+    3. Level (Beginner/Intermediate/Advanced)
+    4. Estimated time to complete
+    5. Official website link
+    
+    Respond ONLY with this JSON structure:
+    {
+      "certifications": [
+        {
+          "skill": "string (the skill topic)",
+          "certifications": [
+            {
+              "name": "string (certification name)",
+              "provider": "string (e.g., Microsoft, Google, AWS)",
+              "level": "string (Beginner/Intermediate/Advanced)",
+              "duration": "string (e.g., 2-3 months, 6 weeks)",
+              "cost": "string (e.g., Free, $99, $165)",
+              "description": "string (brief description)",
+              "link": "string (official URL)",
+              "prerequisites": ["string"],
+              "examRequired": boolean
+            }
+          ],
+          "whyRecommended": "string (why this certification fits the user)"
+        }
+      ],
+      "recommendedProvider": "string (e.g., Microsoft for cloud, Google for data)",
+      "timeline": "string (suggested certification timeline)"
+    }
+    
+    Example:
+    {
+      "certifications": [
+        {
+          "skill": "Python Programming",
+          "certifications": [
+            {
+              "name": "PCAP: Programming Essentials in Python",
+              "provider": "Cisco",
+              "level": "Beginner",
+              "duration": "2-3 months",
+              "cost": "Free",
+              "description": "Covers Python fundamentals, OOP, and basic algorithms",
+              "link": "https://www.netacad.com/courses/programming/pcap-programming-essentials-python",
+              "prerequisites": ["Basic programming knowledge"],
+              "examRequired": true
+            },
+            {
+              "name": "Microsoft Certified: Azure AI Fundamentals",
+              "provider": "Microsoft",
+              "level": "Beginner",
+              "duration": "1-2 months",
+              "cost": "$99",
+              "description": "Covers AI/ML concepts including Python for AI",
+              "link": "https://learn.microsoft.com/en-us/certifications/azure-ai-fundamentals/",
+              "prerequisites": [],
+              "examRequired": true
+            }
+          ],
+          "whyRecommended": "These certifications combine Python skills with cloud/AI applications relevant to Data Solutions"
+        }
+      ]
+    }`;
+
+    const result = await model.generateContent(prompt);
+    return JSON.parse(result.response.text());
+  } catch (error) {
+    console.error('❌ Certification Generation Error:', error);
+    // Return fallback certifications if API fails
+    return getFallbackCertifications(skills, careerPath);
+  }
+};
+
+// Fallback certifications in case API fails
+const getFallbackCertifications = (skills, careerPath) => {
+  const providerMap = {
+    "Python": ["Microsoft", "Google"],
+    "SQL": ["Microsoft", "Oracle"],
+    "Data Analysis": ["Microsoft", "Google", "Tableau"],
+    "Machine Learning": ["Google", "AWS", "Nvidia"],
+    "Cloud": ["AWS", "Microsoft Azure", "Google Cloud"],
+    "AI": ["Microsoft", "Google", "IBM"],
+    "Database": ["Oracle", "MongoDB"],
+    "Cybersecurity": ["CompTIA", "Cisco"],
+    "DevOps": ["AWS", "Microsoft"],
+    "Web Development": ["Google", "Microsoft"]
+  };
+
+  const certifications = skills.map(skill => {
+    const providers = providerMap[skill] || ["Microsoft", "Google"];
+    const mainProvider = providers[0];
+    
+    return {
+      skill: skill,
+      certifications: [
+        {
+          name: `${mainProvider} Certified: ${skill} Fundamentals`,
+          provider: mainProvider,
+          level: "Beginner",
+          duration: "1-2 months",
+          cost: "$99-$165",
+          description: `Official ${mainProvider} certification for ${skill} fundamentals`,
+          link: `https://${mainProvider.toLowerCase()}.com/certifications`,
+          prerequisites: ["Basic knowledge recommended"],
+          examRequired: true
+        },
+        {
+          name: `Google Career Certificate: ${skill}`,
+          provider: "Google",
+          level: "Beginner",
+          duration: "3-6 months",
+          cost: "$49/month",
+          description: `Comprehensive ${skill} certification from Google`,
+          link: "https://grow.google/certificates/",
+          prerequisites: [],
+          examRequired: false
+        }
+      ],
+      whyRecommended: `These certifications are industry-recognized and relevant for ${careerPath}`
+    };
+  });
+
+  return {
+    certifications,
+    recommendedProvider: "Microsoft and Google offer the most comprehensive certifications",
+    timeline: "Complete 1-2 certifications every 3 months"
+  };
+};
+
 export const generateCareerSuggestions = async (quizAnswers) => {
   try {
     const model = genAI.getGenerativeModel(modelConfig);
@@ -47,10 +201,10 @@ export const generateLearningRoadmap = async ({ careerTitle, currentSkills, curr
       Current level: ${currentSkills || 'Beginner'}.
       
       IMPORTANT RULES:
-      1. ALL VALUES MUST BE STRINGS, NOT OBJECTS
-      2. "focus" MUST be a string, not an object
+      1. Return projects as objects with "name" and "description" fields
+      2. "focus" MUST be a string description
       3. "skills" array must contain strings
-      4. "projects" array must contain strings
+      4. Projects should have learning resources when relevant
       5. Keep descriptions concise and practical
       
       Respond ONLY with this JSON structure:
@@ -61,7 +215,15 @@ export const generateLearningRoadmap = async ({ careerTitle, currentSkills, curr
           "focus": "string description of what to focus on",
           "skills": ["string skill 1", "string skill 2"],
           "resources": [{"name": "string resource name", "type": "string", "link": "string"}],
-          "projects": ["string project name", "string project name"],
+          "projects": [
+            {
+              "name": "Project Title",
+              "description": "Brief description of the project",
+              "resources": [
+                {"name": "Resource name", "type": "Tutorial/Website", "link": "https://"}
+              ]
+            }
+          ],
           "weeklyHours": "string"
         }],
         "totalEstimate": "string",
@@ -76,7 +238,15 @@ export const generateLearningRoadmap = async ({ careerTitle, currentSkills, curr
           "focus": "Learn HTML, CSS, and basic JavaScript to build static websites",
           "skills": ["HTML5", "CSS3", "JavaScript Basics"],
           "resources": [{"name": "freeCodeCamp HTML/CSS", "type": "Interactive Course", "link": "https://freecodecamp.org"}],
-          "projects": ["Personal Portfolio Website", "Responsive Landing Page"],
+          "projects": [
+            {
+              "name": "Personal Portfolio Website",
+              "description": "Build a responsive portfolio website with HTML, CSS, and JavaScript",
+              "resources": [
+                {"name": "freeCodeCamp Responsive Web Design", "type": "Tutorial", "link": "https://freecodecamp.org"}
+              ]
+            }
+          ],
           "weeklyHours": "10-15 hours"
         }]
       }`;
@@ -119,13 +289,41 @@ const sanitizeRoadmapResponse = (response) => {
       return String(skill);
     });
     
-    // Ensure projects are strings
+    // Ensure projects have proper structure
     const sanitizedProjects = (month.projects || []).map(project => {
-      if (typeof project === 'string') return project;
-      if (project && typeof project === 'object') {
-        return project.name || project.project || project.description || String(project);
+      // If project is already an object with name and description
+      if (project && typeof project === 'object' && project.name) {
+        return {
+          name: project.name,
+          description: project.description || `Project for Month ${month.month || index + 1}`,
+          resources: project.resources || []
+        };
       }
-      return String(project);
+      
+      // If project is a string
+      if (typeof project === 'string') {
+        return {
+          name: project,
+          description: `Complete this project to practice skills from Month ${month.month || index + 1}`,
+          resources: []
+        };
+      }
+      
+      // If project is an object without proper structure
+      if (project && typeof project === 'object') {
+        return {
+          name: project.title || project.name || `Project ${index}`,
+          description: project.description || project.desc || `Project for Month ${month.month || index + 1}`,
+          resources: project.resources || []
+        };
+      }
+      
+      // Default fallback
+      return {
+        name: `Project ${index + 1}`,
+        description: `Complete this project to practice skills from Month ${month.month || index + 1}`,
+        resources: []
+      };
     });
     
     // Ensure resources have proper structure

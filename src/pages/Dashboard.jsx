@@ -331,6 +331,11 @@ export default function Dashboard() {
                       {monthProjects.map((project, projectIndex) => {
                         const key = `${selectedRoadmap.id}-${monthIndex}-project-${projectIndex}`;
                         const isCompleted = progress[key];
+                        
+                        // Handle both string and object project formats
+                        const projectName = typeof project === 'string' ? project : project.name || "Project";
+                        const projectDescription = typeof project === 'string' ? "Complete this project" : project.description || "";
+                        
                         return (
                           <button
                             key={projectIndex}
@@ -351,11 +356,23 @@ export default function Dashboard() {
                               </div>
                               <div className="flex-1">
                                 <div className={`font-semibold mb-1 ${isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                                  {project.name}
+                                  {projectName}
                                 </div>
                                 <div className={`text-sm ${isCompleted ? 'line-through text-gray-400' : 'text-gray-600'}`}>
-                                  {project.description}
+                                  {projectDescription}
                                 </div>
+                                {/* Add learning resources under projects if they exist */}
+                                {project.resources && project.resources.length > 0 && (
+                                  <div className="mt-2 space-y-1">
+                                    <div className="text-xs font-semibold text-gray-700 mb-1">Learning Resources:</div>
+                                    {project.resources.map((resource, idx) => (
+                                      <div key={idx} className="text-xs text-gray-500 flex items-center gap-1 pl-2">
+                                        <span>•</span>
+                                        <span>{resource.name} - {resource.type}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </button>
