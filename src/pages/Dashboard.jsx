@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import InternshipReadiness from '../components/InternshipReadiness';
+
 
 export default function Dashboard() {
   const [roadmaps, setRoadmaps] = useState([]);
+  const [showReadiness, setShowReadiness] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
   const [progress, setProgress] = useState({});
@@ -224,9 +227,25 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+{/* Internship Readiness Toggle Button */}
+<div className="mt-6 flex justify-center mb-4">
+  <button
+    onClick={() => setShowReadiness(!showReadiness)}
+    className="px-6 py-3 bg-gradient-to-r from-red-700 to-red-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
+  >
+    {showReadiness ? "Hide Internship Readiness Score" : "Check Internship Readiness Score"}
+  </button>
+</div>
+
+{/* Internship Readiness Component */}
+{showReadiness && (
+  <div className="mt-8 mb-6">
+    <InternshipReadiness progress={progress} roadmap={selectedRoadmap} />
+  </div>
+)}
 
         {/* Roadmap Timeline */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {selectedRoadmap?.roadmap?.roadmap?.map((month, monthIndex) => {
             const monthSkills = month.skills || [];
             const monthProjects = month.projects || [];
