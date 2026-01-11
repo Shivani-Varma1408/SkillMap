@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  getDocs,
+  where,
+  doc,
+  getDoc,
+  setDoc
+} from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 import InternshipReadiness from '../components/InternshipReadiness';
-
 
 export default function Dashboard() {
   const [roadmaps, setRoadmaps] = useState([]);
@@ -12,18 +21,37 @@ export default function Dashboard() {
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
   const [progress, setProgress] = useState({});
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    loadRoadmaps();
-    loadProgress();
-  }, []);
+    if (currentUser) {
+      loadRoadmaps();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (selectedRoadmap && currentUser) {
+      loadProgress(selectedRoadmap.id);
+    }
+  }, [selectedRoadmap, currentUser]);
 
   const loadRoadmaps = async () => {
     try {
-      const q = query(collection(db, 'roadmaps'), orderBy('createdAt', 'desc'));
+      if (!currentUser) {
+        console.error('No user logged in');
+        setRoadmaps([]);
+        setLoading(false);
+        return;
+      }
+
+      const q = query(
+        collection(db, 'roadmaps'),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Loaded roadmaps from Firebase:', data.length);
+      console.log('Loaded roadmaps for user:', currentUser.uid, data.length);
       setRoadmaps(data);
       if (data.length > 0) {
         setSelectedRoadmap(data[0]);
@@ -36,21 +64,62 @@ export default function Dashboard() {
     }
   };
 
-  const loadProgress = () => {
-    const saved = localStorage.getItem('roadmapProgress');
-    if (saved) {
-      setProgress(JSON.parse(saved));
+  const loadProgress = async (roadmapId) => {
+    if (!currentUser || !roadmapId) {
+      setProgress({});
+      return;
+    }
+
+    try {
+      const progressRef = doc(db, 'users', currentUser.uid, 'progress', roadmapId);
+      const progressSnap = await getDoc(progressRef);
+      
+      if (progressSnap.exists()) {
+        const progressData = progressSnap.data();
+        console.log('Loaded progress from Firestore:', progressData.tasks);
+        setProgress(progressData.tasks || {});
+      } else {
+        // Create empty progress document if it doesn't exist
+        await setDoc(progressRef, { tasks: {} });
+        setProgress({});
+      }
+    } catch (error) {
+      console.error('Error loading progress:', error);
+      setProgress({});
     }
   };
 
-  const toggleTask = (monthIndex, taskType, taskIndex) => {
-    const key = `${selectedRoadmap.id}-${monthIndex}-${taskType}-${taskIndex}`;
+  const saveProgress = async (newProgress) => {
+    if (!currentUser || !selectedRoadmap) return;
+
+    try {
+      const progressRef = doc(db, 'users', currentUser.uid, 'progress', selectedRoadmap.id);
+      await setDoc(progressRef, { 
+        tasks: newProgress,
+        updatedAt: new Date() 
+      });
+      console.log('Progress saved to Firestore');
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      // Fallback to localStorage as backup (optional)
+      localStorage.setItem(`progress_${currentUser.uid}_${selectedRoadmap.id}`, JSON.stringify(newProgress));
+    }
+  };
+
+  const toggleTask = async (monthIndex, taskType, taskIndex) => {
+    if (!currentUser || !selectedRoadmap) {
+      alert('Please log in to save progress');
+      return;
+    }
+
+    const key = `${monthIndex}-${taskType}-${taskIndex}`;
     const newProgress = {
       ...progress,
       [key]: !progress[key]
     };
+    
     setProgress(newProgress);
-    localStorage.setItem('roadmapProgress', JSON.stringify(newProgress));
+    await saveProgress(newProgress);
   };
 
   const calculateProgress = () => {
@@ -62,12 +131,12 @@ export default function Dashboard() {
     selectedRoadmap.roadmap.roadmap.forEach((month, monthIndex) => {
       month.skills?.forEach((_, skillIndex) => {
         total++;
-        const key = `${selectedRoadmap.id}-${monthIndex}-skill-${skillIndex}`;
+        const key = `${monthIndex}-skill-${skillIndex}`;
         if (progress[key]) completed++;
       });
       month.projects?.forEach((_, projectIndex) => {
         total++;
-        const key = `${selectedRoadmap.id}-${monthIndex}-project-${projectIndex}`;
+        const key = `${monthIndex}-project-${projectIndex}`;
         if (progress[key]) completed++;
       });
     });
@@ -76,31 +145,32 @@ export default function Dashboard() {
   };
 
   const navigateToCertifications = () => {
-  if (selectedRoadmap) {
-    // Extract skills from the roadmap for certifications
-    const allSkills = extractAllSkills(selectedRoadmap);
-    
-    // Get quiz data from the roadmap itself (saved earlier) or sessionStorage
-    const quizAnswers = selectedRoadmap.quizAnswers || 
-                       JSON.parse(sessionStorage.getItem('quizData'))?.answers || {};
-    
-    console.log('Navigating to certifications with:', {
-      career: selectedRoadmap.career,
-      skillsCount: allSkills.length,
-      hasQuizAnswers: Object.keys(quizAnswers).length > 0
-    });
-    
-    navigate('/certifications', {
-      state: {
-        selectedRoadmap: selectedRoadmap,
-        missingSkills: allSkills,
-        quizData: quizAnswers
-      }
-    });
-  } else {
-    alert('Please select a roadmap first');
-  }
-};
+    if (selectedRoadmap && currentUser) {
+      // Extract skills from the roadmap for certifications
+      const allSkills = extractAllSkills(selectedRoadmap);
+      
+      // Use quiz answers from the roadmap (stored in Firestore)
+      const quizAnswers = selectedRoadmap.quizAnswers || {};
+      
+      console.log('Navigating to certifications for user:', currentUser.uid, {
+        career: selectedRoadmap.career,
+        skillsCount: allSkills.length,
+        hasQuizAnswers: Object.keys(quizAnswers).length > 0
+      });
+      
+      navigate('/certifications', {
+        state: {
+          userId: currentUser.uid,
+          selectedRoadmap: selectedRoadmap,
+          missingSkills: allSkills,
+          quizData: quizAnswers
+        }
+      });
+    } else {
+      alert('Please select a roadmap first');
+    }
+  };
+
   const extractAllSkills = (roadmap) => {
     if (!roadmap?.roadmap?.roadmap) return [];
     
@@ -113,6 +183,26 @@ export default function Dashboard() {
     
     return Array.from(allSkills);
   };
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-12 text-center max-w-md">
+          <div className="text-6xl mb-6">🔒</div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-8">
+            Please log in to view your dashboard.
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-xl transition-all"
+          >
+            Go to Login →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -227,22 +317,26 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-{/* Internship Readiness Toggle Button */}
-<div className="mt-6 flex justify-center mb-4">
-  <button
-    onClick={() => setShowReadiness(!showReadiness)}
-    className="px-6 py-3 bg-gradient-to-r from-red-700 to-red-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
-  >
-    {showReadiness ? "Hide Internship Readiness Score" : "Check Internship Readiness Score"}
-  </button>
-</div>
 
-{/* Internship Readiness Component */}
-{showReadiness && (
-  <div className="mt-8 mb-6">
-    <InternshipReadiness progress={progress} roadmap={selectedRoadmap} />
-  </div>
-)}
+        {/* Internship Readiness Toggle Button */}
+        <div className="mt-6 flex justify-center mb-4">
+          <button
+            onClick={() => setShowReadiness(!showReadiness)}
+            className="px-6 py-3 bg-gradient-to-r from-red-700 to-red-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
+          >
+            {showReadiness ? "Hide Internship Readiness Score" : "Check Internship Readiness Score"}
+          </button>
+        </div>
+
+        {/* Internship Readiness Component */}
+        {showReadiness && currentUser && (
+          <div className="mt-8 mb-6">
+            <InternshipReadiness 
+              userId={currentUser.uid} 
+              roadmap={selectedRoadmap} 
+            />
+          </div>
+        )}
 
         {/* Roadmap Timeline */}
         <div className="space-y-8">
@@ -250,10 +344,10 @@ export default function Dashboard() {
             const monthSkills = month.skills || [];
             const monthProjects = month.projects || [];
             const completedSkills = monthSkills.filter((_, i) => 
-              progress[`${selectedRoadmap.id}-${monthIndex}-skill-${i}`]
+              progress[`${monthIndex}-skill-${i}`]
             ).length;
             const completedProjects = monthProjects.filter((_, i) => 
-              progress[`${selectedRoadmap.id}-${monthIndex}-project-${i}`]
+              progress[`${monthIndex}-project-${i}`]
             ).length;
             const monthProgress = Math.round(
               ((completedSkills + completedProjects) / (monthSkills.length + monthProjects.length)) * 100
@@ -292,7 +386,7 @@ export default function Dashboard() {
                     </h4>
                     <div className="space-y-2">
                       {monthSkills.map((skill, skillIndex) => {
-                        const key = `${selectedRoadmap.id}-${monthIndex}-skill-${skillIndex}`;
+                        const key = `${monthIndex}-skill-${skillIndex}`;
                         const isCompleted = progress[key];
                         return (
                           <button
@@ -329,7 +423,7 @@ export default function Dashboard() {
                     </h4>
                     <div className="space-y-3">
                       {monthProjects.map((project, projectIndex) => {
-                        const key = `${selectedRoadmap.id}-${monthIndex}-project-${projectIndex}`;
+                        const key = `${monthIndex}-project-${projectIndex}`;
                         const isCompleted = progress[key];
                         
                         // Handle both string and object project formats

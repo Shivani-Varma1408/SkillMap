@@ -13,7 +13,7 @@ export function calculateReadiness(progress, roadmap) {
   roadmap.roadmap.roadmap.forEach((month, monthIndex) => {
     (month.skills || []).forEach((skill, skillIndex) => {
       totalTasks++;
-      const key = `${roadmap.id}-${monthIndex}-skill-${skillIndex}`;
+      const key = `${monthIndex}-skill-${skillIndex}`;
       if (progress[key]) {
         completedTasks++;
       } else {
@@ -23,7 +23,7 @@ export function calculateReadiness(progress, roadmap) {
 
     (month.projects || []).forEach((project, projectIndex) => {
       totalTasks++;
-      const key = `${roadmap.id}-${monthIndex}-project-${projectIndex}`;
+      const key = `${monthIndex}-project-${projectIndex}`;
       if (progress[key]) completedTasks++;
     });
   });
@@ -34,8 +34,7 @@ export function calculateReadiness(progress, roadmap) {
   else if (score >= 40) status = "In Progress";
   else status = "Just Started";
 
-  // Provide actionable improvements
-  const improvements = missingSkills.slice(0, 5); // top 5 missing skills
+  const improvements = missingSkills.slice(0, 5);
 
   return { score, status, improvements };
 }
@@ -47,7 +46,6 @@ function CircularProgress({ value, size = 120, thickness = 8 }) {
   const progress = value / 100;
   const offset = circumference - (progress * circumference);
 
-  // Determine color based on value
   let ringColor = "";
   let textColor = "";
   
@@ -65,7 +63,6 @@ function CircularProgress({ value, size = 120, thickness = 8 }) {
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
-        {/* Background circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -74,7 +71,6 @@ function CircularProgress({ value, size = 120, thickness = 8 }) {
           className="text-gray-200 fill-none"
           stroke="currentColor"
         />
-        {/* Progress circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -87,7 +83,6 @@ function CircularProgress({ value, size = 120, thickness = 8 }) {
           strokeLinecap="round"
         />
       </svg>
-      {/* Center text */}
       <div className="absolute flex flex-col items-center justify-center">
         <span className={`text-2xl font-bold ${textColor}`}>{value}%</span>
       </div>
@@ -95,32 +90,37 @@ function CircularProgress({ value, size = 120, thickness = 8 }) {
   );
 }
 
-export default function InternshipReadiness({ progress: propProgress, roadmap, userId }) {
-  const [progress, setProgress] = useState(propProgress || {});
+export default function InternshipReadiness({ userId, roadmap }) {
+  const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !roadmap?.id) {
       setLoading(false);
       return;
     }
 
     const fetchProgress = async () => {
       try {
-        const docRef = doc(db, "users", userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProgress(docSnap.data().progress || {});
+        const progressRef = doc(db, 'users', userId, 'progress', roadmap.id);
+        const progressSnap = await getDoc(progressRef);
+        
+        if (progressSnap.exists()) {
+          const progressData = progressSnap.data();
+          setProgress(progressData.tasks || {});
+        } else {
+          setProgress({});
         }
       } catch (err) {
         console.error("Error fetching progress:", err);
+        setProgress({});
       } finally {
         setLoading(false);
       }
     };
 
     fetchProgress();
-  }, [userId]);
+  }, [userId, roadmap?.id]);
 
   if (loading) {
     return (
@@ -132,20 +132,12 @@ export default function InternshipReadiness({ progress: propProgress, roadmap, u
 
   const { score, status, improvements } = calculateReadiness(progress, roadmap);
 
-  // Determine status colors
-  const getStatusColor = () => {
-    if (status === "Ready") return "text-green-700 bg-green-50";
-    if (status === "In Progress") return "text-yellow-700 bg-yellow-50";
-    return "text-red-700 bg-red-50";
-  };
-
   return (
     <div className="internship-readiness p-6 bg-white rounded-xl shadow-md max-w-md mx-auto mt-6">
       <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
         🎯 Internship Readiness
       </h3>
 
-      {/* Circular Progress */}
       <div className="flex flex-col items-center justify-center mb-6">
         <CircularProgress value={score} />
         <div className="mt-4 text-center">
@@ -155,7 +147,6 @@ export default function InternshipReadiness({ progress: propProgress, roadmap, u
         </div>
       </div>
 
-      {/* Ready Panel */}
       {status === "Ready" && (
         <div className="action-panel mt-4 p-4 bg-green-50 rounded-lg text-center border border-green-200">
           <h4 className="font-semibold mb-3 text-green-800">🎉 You're ready to apply!</h4>
@@ -165,7 +156,6 @@ export default function InternshipReadiness({ progress: propProgress, roadmap, u
         </div>
       )}
 
-      {/* Improvement Tips */}
       {status !== "Ready" && (
         <div className="improvement-tips mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h4 className="font-semibold mb-3 text-gray-800">

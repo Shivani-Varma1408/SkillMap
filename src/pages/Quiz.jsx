@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const quizQuestions = [
   {
@@ -108,6 +109,7 @@ export default function Quiz() {
   const [loading, setLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const handleAnswer = (answer) => {
     const newAnswers = {
@@ -134,34 +136,30 @@ export default function Quiz() {
     console.log('Quiz completed! Answers:', finalAnswers);
     
     try {
-      // Try to save to Firebase, but don't block if it fails
       let quizId = 'temp-' + Date.now();
       
       try {
+        // ✅ Save directly to Firestore with user association
         const docRef = await addDoc(collection(db, 'quizResults'), {
+          userId: currentUser?.uid || 'anonymous',
+          userEmail: currentUser?.email || 'anonymous',
           answers: finalAnswers,
           timestamp: new Date(),
+          completed: true
         });
         quizId = docRef.id;
-        console.log('✅ Quiz saved to Firebase with ID:', quizId);
+        console.log('✅ Quiz saved to Firestore with ID:', quizId);
       } catch (fbError) {
-        console.warn('⚠️ Firebase save failed, using temp ID:', fbError);
+        console.warn('⚠️ Firestore save failed, using temp ID:', fbError);
+        quizId = 'temp-' + Date.now();
       }
 
-      // Store in sessionStorage as backup
-      sessionStorage.setItem('quizData', JSON.stringify({
-        quizId: quizId,
-        answers: finalAnswers
-      }));
-      
-      console.log('Navigating to roadmap with data...');
-
-      // Navigate to roadmap with quiz data
+      // ✅ Navigate with quiz data (Firestore is source of truth)
       setTimeout(() => {
         navigate('/roadmap', { 
           state: { 
             quizId: quizId,
-            answers: finalAnswers 
+            answers: finalAnswers
           },
           replace: false
         });
@@ -169,7 +167,8 @@ export default function Quiz() {
 
     } catch (error) {
       console.error('❌ Error in quiz submission:', error);
-      // Still navigate even if there's an error
+      
+      // Fallback navigation with temp data
       setTimeout(() => {
         navigate('/roadmap', { 
           state: { 
@@ -263,7 +262,7 @@ export default function Quiz() {
     );
   }
 
-  const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+  const progress = (Object.keys(answers).length / quizQuestions.length) * 100;
   const question = quizQuestions[currentQuestion];
 
   return (

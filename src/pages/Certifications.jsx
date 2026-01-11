@@ -2,12 +2,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { generateCertifications } from '../services/geminiAPI'; // Import the new function
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { generateCertifications } from '../services/geminiAPI';
+import { useAuth } from '../context/AuthContext';
 
 export default function CertificationsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const [roadmaps, setRoadmaps] = useState([]);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
@@ -17,7 +19,6 @@ export default function CertificationsPage() {
   const [loading, setLoading] = useState(true);
   const [generatingCerts, setGeneratingCerts] = useState(false);
 
-  // 🔒 Prevent multiple executions
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -25,23 +26,28 @@ export default function CertificationsPage() {
   }, []);
 
   useEffect(() => {
+    // Redirect if no user
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+
     if (hasLoadedRef.current) return;
     hasLoadedRef.current = true;
 
     console.log('Location state:', location.state);
-    console.log('Session storage quizData:', sessionStorage.getItem('quizData'));
-
     loadData();
-  }, []);
+  }, [currentUser, navigate, location.state]);
 
   useEffect(() => {
-    // Generate certifications when we have all required data
-    if (selectedRoadmap && missingSkills.length > 0 && !certificationsData && !generatingCerts) {
+    if (selectedRoadmap && missingSkills.length > 0 && !certificationsData && !generatingCerts && currentUser) {
       generateCertificationRecommendations();
     }
-  }, [selectedRoadmap, missingSkills, quizData]);
+  }, [selectedRoadmap, missingSkills, certificationsData, generatingCerts, currentUser]);
 
   const loadData = async () => {
+    if (!currentUser) return;
+
     try {
       const locationState = location.state;
 
@@ -70,7 +76,14 @@ export default function CertificationsPage() {
 
       // ---------- PRIORITY 2: FIREBASE ----------
       console.log('No location state, loading from Firebase...');
-      const q = query(collection(db, 'roadmaps'), orderBy('createdAt', 'desc'));
+      
+      // ✅ FIXED: Only load roadmaps for current user
+      const q = query(
+        collection(db, 'roadmaps'),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
       const snapshot = await getDocs(q);
 
       const roadmapData = snapshot.docs.map(doc => ({
@@ -81,39 +94,24 @@ export default function CertificationsPage() {
       console.log('Loaded roadmaps:', roadmapData.length);
       setRoadmaps(roadmapData);
 
-      // ---------- PRIORITY 3: SESSION STORAGE ----------
-      const savedQuizData = sessionStorage.getItem('quizData');
-      console.log('Saved quiz data from sessionStorage:', savedQuizData);
-
-      if (savedQuizData) {
-        try {
-          const parsedQuizData = JSON.parse(savedQuizData);
-          setQuizData(parsedQuizData.answers || {});
-          console.log('Parsed quiz data:', parsedQuizData);
-
-          if (parsedQuizData.careerPath && roadmapData.length > 0) {
-            const matchingRoadmap =
-              roadmapData.find(r => r.career === parsedQuizData.careerPath) ||
-              roadmapData[0];
-
-            setSelectedRoadmap(matchingRoadmap);
-            console.log('Found matching roadmap:', matchingRoadmap.career);
-
-            const skills = extractMissingSkills(matchingRoadmap);
-            setMissingSkills(skills);
-            console.log('Extracted missing skills:', skills.length);
-          }
-        } catch (e) {
-          console.warn('Failed to parse quiz data:', e);
+      // ✅ FIXED: Use quizAnswers from Firestore instead of sessionStorage
+      if (roadmapData.length > 0) {
+        // Try to find a roadmap with quiz data
+        const roadmapWithQuiz = roadmapData.find(r => r.quizAnswers && Object.keys(r.quizAnswers).length > 0);
+        
+        if (roadmapWithQuiz) {
+          setSelectedRoadmap(roadmapWithQuiz);
+          setQuizData(roadmapWithQuiz.quizAnswers || {});
+          const skills = extractMissingSkills(roadmapWithQuiz);
+          setMissingSkills(skills);
+          console.log('Found roadmap with quiz data:', roadmapWithQuiz.career);
+        } else if (roadmapData.length > 0) {
+          // Fallback to first roadmap
+          setSelectedRoadmap(roadmapData[0]);
+          const skills = extractMissingSkills(roadmapData[0]);
+          setMissingSkills(skills);
+          console.log('Set first roadmap as default:', roadmapData[0].career);
         }
-      }
-
-      // ---------- FALLBACK ----------
-      if (roadmapData.length > 0 && !selectedRoadmap) {
-        setSelectedRoadmap(roadmapData[0]);
-        const skills = extractMissingSkills(roadmapData[0]);
-        setMissingSkills(skills);
-        console.log('Set first roadmap as default:', roadmapData[0].career);
       }
 
     } catch (error) {
@@ -126,9 +124,16 @@ export default function CertificationsPage() {
   const extractMissingSkills = (roadmap) => {
     if (!roadmap) return [];
 
+    // ✅ FIXED: Use quizAnswers from roadmap if available
     if (roadmap.missingSkills && Array.isArray(roadmap.missingSkills)) {
       console.log('Using saved missingSkills from roadmap');
       return roadmap.missingSkills;
+    }
+
+    // Try to extract from quiz answers
+    if (roadmap.quizAnswers && roadmap.quizAnswers.missingSkills) {
+      console.log('Using missingSkills from quizAnswers');
+      return roadmap.quizAnswers.missingSkills;
     }
 
     if (!roadmap?.roadmap?.roadmap) return [];
@@ -153,27 +158,37 @@ export default function CertificationsPage() {
   };
 
   const generateCertificationRecommendations = async () => {
-    if (!selectedRoadmap || missingSkills.length === 0) return;
-
+    // ✅ FIXED: Added currentUser check and better validation
+    if (!selectedRoadmap || missingSkills.length === 0 || !currentUser) {
+      console.log('Missing required data for certifications:', {
+        hasRoadmap: !!selectedRoadmap,
+        missingSkillsCount: missingSkills.length,
+        hasUser: !!currentUser
+      });
+      return;
+    }
+    
     setGeneratingCerts(true);
     try {
       console.log('Generating certification recommendations for:', {
         career: selectedRoadmap.career,
         skills: missingSkills.length,
-        quizData: quizData ? 'available' : 'none'
+        quizAnswers: selectedRoadmap.quizAnswers ? 'available' : 'none'
       });
 
+      // ✅ FIXED: Use quizAnswers from Firestore roadmap, not sessionStorage
       const certs = await generateCertifications(
         missingSkills,
         selectedRoadmap.career,
-        quizData || {}
+        selectedRoadmap.quizAnswers || {}
       );
 
       console.log('Generated certifications:', certs);
       setCertificationsData(certs);
     } catch (error) {
       console.error('Failed to generate certifications:', error);
-      // Set fallback data
+      
+      // Set fallback data with current user context
       setCertificationsData({
         certifications: missingSkills.map(skill => ({
           skill: skill,
@@ -217,11 +232,11 @@ export default function CertificationsPage() {
     const skills = extractMissingSkills(roadmap);
     setMissingSkills(skills);
     
+    // ✅ FIXED: Use quizAnswers from Firestore roadmap
+    setQuizData(roadmap.quizAnswers || {});
+    
     // Clear old certifications when roadmap changes
     setCertificationsData(null);
-
-    sessionStorage.setItem('selectedRoadmap', JSON.stringify(roadmap));
-    sessionStorage.setItem('missingSkills', JSON.stringify(skills));
   };
 
   const refreshCertifications = () => {

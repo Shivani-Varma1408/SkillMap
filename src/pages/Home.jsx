@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [currentRole, setCurrentRole] = useState(0);
   
   const roles = [
@@ -20,6 +22,14 @@ export default function Home() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleStartJourney = () => {
+    if (currentUser) {
+      navigate('/quiz');
+    } else {
+      navigate('/login', { state: { returnTo: '/quiz' } });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700">
@@ -53,12 +63,12 @@ export default function Home() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex gap-6 justify-center items-center">
+          <div className="flex gap-6 justify-center items-center flex-wrap">
             <button
-              onClick={() => navigate('/quiz')}
+              onClick={handleStartJourney}
               className="px-10 py-5 bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-gray-900 rounded-2xl font-bold text-xl hover:scale-110 transform transition-all shadow-2xl hover:shadow-yellow-500/50"
             >
-              Start Your Journey →
+              {currentUser ? 'Start Your Journey →' : 'Login to Start →'}
             </button>
             <button
               onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
@@ -67,6 +77,13 @@ export default function Home() {
               Learn More
             </button>
           </div>
+
+          {/* Login notice for non-authenticated users */}
+          {!currentUser && (
+            <p className="text-white/80 text-sm mt-4">
+              ✨ Login required to save your personalized roadmap
+            </p>
+          )}
         </div>
 
         {/* Stats Section */}
@@ -165,12 +182,14 @@ export default function Home() {
             Start your personalized career journey today
           </p>
           <button
-            onClick={() => navigate('/quiz')}
+            onClick={handleStartJourney}
             className="px-12 py-6 bg-gray-900 text-white rounded-2xl font-bold text-2xl hover:bg-gray-800 transform hover:scale-105 transition-all shadow-2xl"
           >
-            Start Free Quiz Now →
+            {currentUser ? 'Start Free Quiz Now →' : 'Login & Start Quiz →'}
           </button>
-          <p className="text-gray-800 mt-4 text-sm">✨ No signup required • Takes 2 minutes • 100% Free</p>
+          <p className="text-gray-800 mt-4 text-sm">
+            ✨ {currentUser ? 'Your progress will be saved' : 'Login to save your progress'} • Takes 2 minutes • 100% Free
+          </p>
         </div>
       </div>
     </div>

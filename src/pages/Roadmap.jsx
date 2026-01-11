@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { generateCareerSuggestions, generateLearningRoadmap } from '../services/geminiAPI';
+import { useAuth } from '../context/AuthContext';
 
 export default function Roadmap() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  
   const [step, setStep] = useState('careers');
   const [careers, setCareers] = useState(null);
   const [selectedCareer, setSelectedCareer] = useState(null);
@@ -18,16 +21,16 @@ export default function Roadmap() {
   const [firebaseRoadmapId, setFirebaseRoadmapId] = useState(null);
 
   useEffect(() => {
-    const answers = location.state?.answers || JSON.parse(sessionStorage.getItem('quizData'))?.answers;
-
+    const answers = location.state?.answers;
+    
     if (answers) {
-      console.log('✅ Quiz answers found, fetching AI matches...');
+      console.log('✅ Quiz answers from navigation state');
       fetchSuggestions(answers);
     } else {
-      console.error('❌ No quiz answers found, redirecting to quiz');
-      navigate('/quiz');
+      console.log('⚠️ No quiz answers, loading existing roadmap');
+      loadExistingRoadmap();
     }
-  }, []);
+  }, [location.state, currentUser]);
 
   const fetchSuggestions = async (answers) => {
     setLoading(true);
@@ -50,7 +53,14 @@ export default function Roadmap() {
   const handleGenerateRoadmap = async () => {
     setStep('generating');
     try {
-      const answers = location.state?.answers || JSON.parse(sessionStorage.getItem('quizData'))?.answers;
+      // Check if user is logged in
+      if (!currentUser) {
+        alert('Please log in to save your roadmap');
+        navigate('/login');
+        return;
+      }
+
+      const answers = location.state?.answers;
       
       console.log('Generating roadmap with:', {
         careerTitle: selectedCareer.title,
@@ -71,49 +81,26 @@ export default function Roadmap() {
       const extractedSkills = extractMissingSkills(data);
       setMissingSkills(extractedSkills);
 
-      // Save roadmap to Firebase
+      // Save roadmap to Firebase with userId
       let savedRoadmapId = null;
       try {
         const docRef = await addDoc(collection(db, 'roadmaps'), {
+          userId: currentUser.uid, // ✅ CRITICAL: Associate roadmap with user
           career: selectedCareer.title,
           roadmap: data,
           missingSkills: extractedSkills,
           createdAt: new Date(),
-          quizAnswers: answers || {} // Save quiz answers with roadmap
+          quizAnswers: answers || {}
         });
         savedRoadmapId = docRef.id;
         setFirebaseRoadmapId(savedRoadmapId);
-        console.log('Roadmap saved to Firebase with ID:', savedRoadmapId);
+        console.log('✅ Roadmap saved to Firebase for user:', currentUser.uid, 'ID:', savedRoadmapId);
       } catch (e) { 
-        console.warn("Firebase save failed", e);
-        // Create a fallback ID if Firebase fails
-        savedRoadmapId = `local-${Date.now()}`;
+        console.error("Firebase save failed", e);
+        alert("Failed to save roadmap. Please try again.");
+        setStep('input');
+        return;
       }
-
-      // Save quiz data for certifications page
-      const quizDataToSave = {
-        answers: answers || {},
-        careerPath: selectedCareer.title,
-        missingSkills: extractedSkills,
-        roadmapId: savedRoadmapId,
-        generatedAt: new Date().toISOString()
-      };
-      
-      sessionStorage.setItem('quizData', JSON.stringify(quizDataToSave));
-      console.log('Quiz data saved to sessionStorage:', quizDataToSave);
-
-      // Also save roadmap to sessionStorage for immediate access
-      const roadmapToSave = {
-        id: savedRoadmapId,
-        career: selectedCareer.title,
-        roadmap: data,
-        missingSkills: extractedSkills,
-        createdAt: new Date(),
-        quizAnswers: answers || {}
-      };
-      
-      sessionStorage.setItem('currentRoadmap', JSON.stringify(roadmapToSave));
-      console.log('Roadmap saved to sessionStorage');
 
       setRoadmap(data);
       setStep('roadmap');
@@ -136,7 +123,6 @@ export default function Roadmap() {
           if (typeof skill === 'string') {
             allSkills.add(skill.trim());
           } else if (skill && typeof skill === 'object') {
-            // Handle object skills
             const skillText = skill.name || skill.skill || skill.description || String(skill);
             allSkills.add(skillText.trim());
           }
@@ -147,39 +133,100 @@ export default function Roadmap() {
     return Array.from(allSkills);
   };
 
+  // Helper to extract all skills from roadmap - SAFER VERSION
+  const extractAllSkills = (roadmapData) => {
+    // Handle both roadmapData.roadmap and direct roadmap array
+    let roadmapArray;
+    
+    if (Array.isArray(roadmapData)) {
+      // Direct array passed (new format)
+      roadmapArray = roadmapData;
+    } else if (roadmapData?.roadmap && Array.isArray(roadmapData.roadmap)) {
+      // Nested object passed (old format)
+      roadmapArray = roadmapData.roadmap;
+    } else {
+      return [];
+    }
+    
+    const allSkills = new Set();
+    
+    roadmapArray.forEach(month => {
+      if (month.skills && Array.isArray(month.skills)) {
+        month.skills.forEach(skill => {
+          if (typeof skill === 'string') {
+            allSkills.add(skill.trim());
+          } else if (skill && typeof skill === 'object') {
+            const skillText = skill.name || skill.skill || skill.description || String(skill);
+            allSkills.add(skillText.trim());
+          }
+        });
+      }
+    });
+    
+    return Array.from(allSkills);
+  };
+
+  const loadExistingRoadmap = async () => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'roadmaps'),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.size > 0) {
+        const roadmapDoc = snapshot.docs[0].data();
+        
+        // Set the roadmap data directly
+        setRoadmap(roadmapDoc.roadmap);
+        setSelectedCareer({ title: roadmapDoc.career });
+        setMissingSkills(roadmapDoc.missingSkills || []);
+        setStep('roadmap');
+        
+        console.log('✅ Loaded existing roadmap:', roadmapDoc.career);
+      } else {
+        console.log('📭 No roadmaps found, redirecting to quiz');
+        navigate('/quiz');
+      }
+    } catch (error) {
+      console.error('Error loading roadmap:', error);
+      navigate('/quiz');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const navigateToCertifications = () => {
     try {
-      // Get data from multiple sources
-      const sessionQuizData = JSON.parse(sessionStorage.getItem('quizData')) || {};
-      const sessionRoadmap = JSON.parse(sessionStorage.getItem('currentRoadmap')) || {};
+      if (!currentUser) {
+        alert('Please log in');
+        return;
+      }
+
+      const allSkills = extractAllSkills(roadmap);
       
       console.log('Navigating to certifications with data:', {
-        sessionQuizData: sessionQuizData,
-        sessionRoadmap: sessionRoadmap,
-        localRoadmap: roadmap,
-        localMissingSkills: missingSkills
+        userId: currentUser.uid,
+        careerPath: selectedCareer.title,
+        missingSkills: allSkills,
+        quizResults: location.state?.answers || {}
       });
 
-      // Prepare navigation state - keep it simple and small
-      const navigationState = {
-        // Use the roadmap we just generated
-        careerPath: selectedCareer.title,
-        missingSkills: missingSkills,
-        quizResults: sessionQuizData.answers || {},
-        // Pass minimal roadmap data
-        roadmapData: {
-          id: firebaseRoadmapId || `roadmap-${Date.now()}`,
-          career: selectedCareer.title,
-          missingSkills: missingSkills
-        }
-      };
-
-      console.log('Navigation state prepared:', navigationState);
-      
       navigate('/certifications', {
-        state: navigationState,
-        // Prevent state from being too large
-        replace: false
+        state: {
+          userId: currentUser.uid,
+          careerPath: selectedCareer.title,
+          missingSkills: allSkills,
+          quizResults: location.state?.answers || {}
+        }
       });
       
     } catch (error) {
@@ -189,23 +236,7 @@ export default function Roadmap() {
   };
 
   const navigateToDashboard = () => {
-    // Save the generated roadmap to sessionStorage for dashboard access
-    const roadmapToSave = {
-      id: firebaseRoadmapId || `roadmap-${Date.now()}`,
-      career: selectedCareer.title,
-      roadmap: roadmap,
-      missingSkills: missingSkills,
-      createdAt: new Date(),
-      quizAnswers: JSON.parse(sessionStorage.getItem('quizData'))?.answers || {}
-    };
-    
-    sessionStorage.setItem('currentRoadmap', JSON.stringify(roadmapToSave));
-    
-    // Also ensure it's in the dashboard list
-    const dashboardRoadmaps = JSON.parse(sessionStorage.getItem('dashboardRoadmaps') || '[]');
-    dashboardRoadmaps.push(roadmapToSave);
-    sessionStorage.setItem('dashboardRoadmaps', JSON.stringify(dashboardRoadmaps));
-    
+    // Just navigate - Dashboard will load from Firestore
     navigate('/dashboard');
   };
 
@@ -332,12 +363,10 @@ export default function Roadmap() {
           {/* Roadmap Timeline */}
           <div className="space-y-6 mb-10">
             {roadmap.roadmap?.map((m, i) => {
-              // Safely handle focus - could be string or object
               let focusText = "";
               if (typeof m.focus === 'string') {
                 focusText = m.focus;
               } else if (m.focus && typeof m.focus === 'object') {
-                // If focus is an object, extract description or name
                 focusText = m.focus.description || m.focus.name || 
                            m.focus.focus || `Month ${m.month || i + 1} focus`;
               } else {
@@ -365,7 +394,6 @@ export default function Roadmap() {
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {m.skills.map((skill, idx) => {
-                          // Handle both string and object skills
                           let skillText = "";
                           if (typeof skill === 'string') {
                             skillText = skill;
@@ -394,7 +422,6 @@ export default function Roadmap() {
                       </h4>
                       <ul className="space-y-2">
                         {m.projects.map((project, idx) => {
-                          // Handle both string and object projects
                           let projectText = "";
                           if (typeof project === 'string') {
                             projectText = project;
@@ -424,7 +451,6 @@ export default function Roadmap() {
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {m.resources.map((resource, idx) => {
-                          // Handle resource objects
                           let resourceName = "";
                           let resourceUrl = "#";
                           
@@ -517,20 +543,6 @@ export default function Roadmap() {
                 <div className="text-sm text-gray-600">Skill Gaps</div>
               </div>
             </div>
-          </div>
-
-          {/* Debug info (remove in production) */}
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
-            <p><strong>Debug Info:</strong></p>
-            <p>Career: {selectedCareer.title}</p>
-            <p>Missing Skills: {missingSkills.length}</p>
-            <p>Roadmap ID: {firebaseRoadmapId || 'Not saved to Firebase'}</p>
-            <button 
-              onClick={() => console.log('Full roadmap data:', roadmap)}
-              className="mt-2 px-3 py-1 bg-gray-300 rounded text-xs"
-            >
-              Log Roadmap Data
-            </button>
           </div>
         </div>
       </div>

@@ -1,8 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-// Optionally: import services you want, e.g., auth, firestore
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth"; // ✅ Added GoogleAuthProvider
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -14,12 +13,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Export services for use in your app
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// ✅ Export Google Auth Provider
+export const googleProvider = new GoogleAuthProvider();
 
 export default app;
