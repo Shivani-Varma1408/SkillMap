@@ -5,6 +5,19 @@ import { db } from '../services/firebase';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { generateCertifications } from '../services/geminiAPI';
 import { useAuth } from '../context/AuthContext';
+import {
+  Award,
+  BookOpen,
+  Bot,
+  Building2,
+  CalendarDays,
+  CircleDollarSign,
+  GraduationCap,
+  Lightbulb,
+  RefreshCw,
+  Sparkles,
+  Target,
+} from 'lucide-react';
 
 export default function CertificationsPage() {
   const location = useLocation();
@@ -77,7 +90,7 @@ export default function CertificationsPage() {
       // ---------- PRIORITY 2: FIREBASE ----------
       console.log('No location state, loading from Firebase...');
       
-      // ✅ FIXED: Only load roadmaps for current user
+      // Only load roadmaps for current user
       const q = query(
         collection(db, 'roadmaps'),
         where('userId', '==', currentUser.uid),
@@ -94,7 +107,7 @@ export default function CertificationsPage() {
       console.log('Loaded roadmaps:', roadmapData.length);
       setRoadmaps(roadmapData);
 
-      // ✅ FIXED: Use quizAnswers from Firestore instead of sessionStorage
+      // Use quizAnswers from Firestore instead of sessionStorage
       if (roadmapData.length > 0) {
         // Try to find a roadmap with quiz data
         const roadmapWithQuiz = roadmapData.find(r => r.quizAnswers && Object.keys(r.quizAnswers).length > 0);
@@ -124,7 +137,7 @@ export default function CertificationsPage() {
   const extractMissingSkills = (roadmap) => {
     if (!roadmap) return [];
 
-    // ✅ FIXED: Use quizAnswers from roadmap if available
+    // Use quizAnswers from roadmap if available
     if (roadmap.missingSkills && Array.isArray(roadmap.missingSkills)) {
       console.log('Using saved missingSkills from roadmap');
       return roadmap.missingSkills;
@@ -158,7 +171,7 @@ export default function CertificationsPage() {
   };
 
   const generateCertificationRecommendations = async () => {
-    // ✅ FIXED: Added currentUser check and better validation
+    // Added currentUser check and better validation
     if (!selectedRoadmap || missingSkills.length === 0 || !currentUser) {
       console.log('Missing required data for certifications:', {
         hasRoadmap: !!selectedRoadmap,
@@ -176,7 +189,7 @@ export default function CertificationsPage() {
         quizAnswers: selectedRoadmap.quizAnswers ? 'available' : 'none'
       });
 
-      // ✅ FIXED: Use quizAnswers from Firestore roadmap, not sessionStorage
+      // Use quizAnswers from Firestore roadmap, not sessionStorage
       const certs = await generateCertifications(
         missingSkills,
         selectedRoadmap.career,
@@ -232,7 +245,7 @@ export default function CertificationsPage() {
     const skills = extractMissingSkills(roadmap);
     setMissingSkills(skills);
     
-    // ✅ FIXED: Use quizAnswers from Firestore roadmap
+    // Use quizAnswers from Firestore roadmap
     setQuizData(roadmap.quizAnswers || {});
     
     // Clear old certifications when roadmap changes
@@ -261,7 +274,7 @@ export default function CertificationsPage() {
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="text-7xl mb-6">🏆</div>
+          <Award size={48} className="mx-auto mb-6 text-[#1f5747]" />
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
             Personalized Certifications
           </h1>
@@ -285,13 +298,13 @@ export default function CertificationsPage() {
         {roadmaps.length > 0 && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 mb-10">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">🎯 Select a Career Path</h2>
+              <h2 className="flex items-center gap-2 text-2xl font-bold"><Target size={22} className="text-[#28725b]" />Select a Career Path</h2>
               {certificationsData && (
                 <button
                   onClick={refreshCertifications}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                  🔄 Refresh Certifications
+                  <RefreshCw size={16} className="mr-2 inline" />Refresh Certifications
                 </button>
               )}
             </div>
@@ -333,15 +346,15 @@ export default function CertificationsPage() {
             <div>
               {/* Overall Recommendations */}
               <div className="mb-10 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">🌟 Overall Recommendations</h2>
+                <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-gray-800"><Sparkles size={21} className="text-[#28725b]" />Overall Recommendations</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white p-5 rounded-xl shadow-sm">
-                    <div className="text-blue-600 text-2xl mb-2">🏢</div>
+                    <Building2 size={24} className="mb-2 text-[#28725b]" />
                     <h3 className="font-bold text-gray-800 mb-2">Recommended Provider</h3>
                     <p className="text-gray-600">{certificationsData.recommendedProvider}</p>
                   </div>
                   <div className="bg-white p-5 rounded-xl shadow-sm">
-                    <div className="text-purple-600 text-2xl mb-2">📅</div>
+                    <CalendarDays size={24} className="mb-2 text-[#28725b]" />
                     <h3 className="font-bold text-gray-800 mb-2">Suggested Timeline</h3>
                     <p className="text-gray-600">{certificationsData.timeline}</p>
                   </div>
@@ -349,7 +362,7 @@ export default function CertificationsPage() {
               </div>
 
               {/* Skills & Certifications */}
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">📚 Recommended Certifications</h2>
+              <h2 className="mb-6 flex items-center gap-2 text-3xl font-bold text-gray-800"><BookOpen size={26} className="text-[#28725b]" />Recommended Certifications</h2>
               
               <div className="space-y-8">
                 {certificationsData.certifications.map((item, index) => (
@@ -384,10 +397,7 @@ export default function CertificationsPage() {
                               </div>
                             </div>
                             <span className="text-xl">
-                              {cert.provider === 'Microsoft' ? '🔵' : 
-                               cert.provider === 'Google' ? '🔴' : 
-                               cert.provider === 'AWS' ? '🟠' : 
-                               cert.provider === 'Nvidia' ? '🟢' : '🏢'}
+                              <Building2 size={20} className="text-[#28725b]" aria-label={`${cert.provider} certification provider`} />
                             </span>
                           </div>
                           
@@ -395,8 +405,8 @@ export default function CertificationsPage() {
                           
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center gap-4">
-                              <span>💵 {cert.cost}</span>
-                              <span>{cert.examRequired ? '📝 Exam Required' : '📚 Course Only'}</span>
+                              <span className="inline-flex items-center gap-1"><CircleDollarSign size={16} />{cert.cost}</span>
+                              <span className="inline-flex items-center gap-1">{cert.examRequired ? <GraduationCap size={16} /> : <BookOpen size={16} />}{cert.examRequired ? 'Exam Required' : 'Course Only'}</span>
                             </div>
                             <a
                               href={cert.link}
@@ -429,7 +439,7 @@ export default function CertificationsPage() {
               
               {/* Action Tips */}
               <div className="mt-10 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl">
-                <h3 className="text-xl font-bold text-gray-800 mb-3">💡 Certification Tips</h3>
+                <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-gray-800"><Lightbulb size={21} className="text-[#28725b]" />Certification Tips</h3>
                 <ul className="list-disc pl-5 space-y-2 text-gray-600">
                   <li>Start with 1-2 certifications that match your current skill level</li>
                   <li>Check if your employer offers certification reimbursement</li>
@@ -441,7 +451,7 @@ export default function CertificationsPage() {
             </div>
           ) : selectedRoadmap ? (
             <div className="text-center py-12">
-              <div className="text-5xl mb-4">🤖</div>
+              <Bot size={40} className="mx-auto mb-4 text-[#28725b]" />
               <h3 className="text-2xl font-bold text-gray-800 mb-3">
                 Ready to Generate Certification Recommendations
               </h3>
@@ -452,7 +462,7 @@ export default function CertificationsPage() {
                 onClick={generateCertificationRecommendations}
                 className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-xl transition-all"
               >
-                🚀 Generate Certifications
+                <Sparkles size={18} className="mr-2 inline" />Generate Certifications
               </button>
             </div>
           ) : (

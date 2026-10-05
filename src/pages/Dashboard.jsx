@@ -1,5 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Award,
+  BookOpen,
+  ChartNoAxesColumnIncreasing,
+  Code2,
+  Dumbbell,
+  Flame,
+  GraduationCap,
+  Inbox,
+  LockKeyhole,
+  PartyPopper,
+  Rocket,
+  Settings,
+  Target,
+  Trophy,
+  Zap,
+} from 'lucide-react';
 import { db } from '../services/firebase';
 import { 
   collection, 
@@ -188,7 +205,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-12 text-center max-w-md">
-          <div className="text-6xl mb-6">🔒</div>
+          <LockKeyhole size={44} className="mx-auto mb-6 text-[#28725b]" />
           <h2 className="text-3xl font-bold text-gray-800 mb-4">Authentication Required</h2>
           <p className="text-gray-600 mb-8">
             Please log in to view your dashboard.
@@ -208,7 +225,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center">
         <div className="text-center text-white">
-          <div className="animate-spin text-6xl mb-4">⚙️</div>
+          <Settings size={44} className="mx-auto mb-4 animate-spin text-[#28725b]" />
           <p className="text-2xl">Loading your dashboard...</p>
         </div>
       </div>
@@ -219,7 +236,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-12 text-center max-w-md">
-          <div className="text-6xl mb-6">📭</div>
+          <Inbox size={44} className="mx-auto mb-6 text-[#28725b]" />
           <h2 className="text-3xl font-bold text-gray-800 mb-4">No Roadmaps Yet</h2>
           <p className="text-gray-600 mb-8">
             Take the quiz and generate your personalized roadmap to get started!
@@ -236,13 +253,20 @@ export default function Dashboard() {
   }
 
   const progressPercentage = calculateProgress();
+  const EncouragementIcon = progressPercentage === 100
+    ? PartyPopper
+    : progressPercentage > 75
+      ? Flame
+      : progressPercentage > 50
+        ? Dumbbell
+        : Rocket;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">📊</div>
+          <ChartNoAxesColumnIncreasing size={42} className="mx-auto mb-4 text-[#28725b]" />
           <h1 className="text-5xl font-bold text-white mb-2">Your Dashboard</h1>
           <p className="text-xl text-white/90">Track your learning journey</p>
           
@@ -252,7 +276,7 @@ export default function Dashboard() {
               onClick={navigateToCertifications}
               className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl font-bold hover:shadow-2xl transition-all hover:-translate-y-1"
             >
-              <span className="text-2xl">🏆</span>
+              <Trophy size={22} />
               View Recommended Certifications
             </button>
           </div>
@@ -288,28 +312,28 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 mt-8">
             <div className="text-center p-4 bg-purple-50 rounded-xl">
-              <div className="text-3xl mb-2">📚</div>
+              <BookOpen size={26} className="mx-auto mb-2 text-[#28725b]" />
               <div className="text-2xl font-bold text-purple-600">
                 {selectedRoadmap?.roadmap?.roadmap?.length || 0}
               </div>
               <div className="text-sm text-gray-600">Months</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-xl">
-              <div className="text-3xl mb-2">💻</div>
+              <Code2 size={26} className="mx-auto mb-2 text-[#28725b]" />
               <div className="text-2xl font-bold text-blue-600">
                 {selectedRoadmap?.roadmap?.roadmap?.reduce((sum, m) => sum + (m.projects?.length || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Projects</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-xl">
-              <div className="text-3xl mb-2">⚡</div>
+              <Zap size={26} className="mx-auto mb-2 text-[#28725b]" />
               <div className="text-2xl font-bold text-green-600">
                 {selectedRoadmap?.roadmap?.roadmap?.reduce((sum, m) => sum + (m.skills?.length || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Skills</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-xl">
-              <div className="text-3xl mb-2">🎯</div>
+              <Target size={26} className="mx-auto mb-2 text-[#28725b]" />
               <div className="text-2xl font-bold text-orange-600">
                 {progressPercentage > 75 ? 'Almost!' : progressPercentage > 50 ? 'Halfway' : progressPercentage > 25 ? 'Started' : 'Begin'}
               </div>
@@ -382,7 +406,7 @@ export default function Dashboard() {
                   {/* Skills Checklist */}
                   <div>
                     <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-lg">
-                      <span>📚</span> Skills to Master ({completedSkills}/{monthSkills.length})
+                      <BookOpen size={18} className="text-[#28725b]" />Skills to Master ({completedSkills}/{monthSkills.length})
                     </h4>
                     <div className="space-y-2">
                       {monthSkills.map((skill, skillIndex) => {
@@ -419,7 +443,7 @@ export default function Dashboard() {
                   {/* Projects Checklist */}
                   <div>
                     <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-lg">
-                      <span>💻</span> Projects to Build ({completedProjects}/{monthProjects.length})
+                      <Code2 size={18} className="text-[#28725b]" />Projects to Build ({completedProjects}/{monthProjects.length})
                     </h4>
                     <div className="space-y-3">
                       {monthProjects.map((project, projectIndex) => {
@@ -478,7 +502,7 @@ export default function Dashboard() {
                   {/* Resources */}
                   <div>
                     <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-lg">
-                      <span>🎓</span> Learning Resources
+                      <GraduationCap size={18} className="text-[#28725b]" />Learning Resources
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       {month.resources?.map((resource, idx) => (
@@ -507,7 +531,7 @@ export default function Dashboard() {
             onClick={navigateToCertifications}
             className="flex-1 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl font-bold hover:shadow-xl transition-all"
           >
-            Get Certifications 🏆
+            <Award size={19} className="mr-2 inline" />Get Certifications
           </button>
           <button
             onClick={() => navigate('/roadmap')}
@@ -519,9 +543,7 @@ export default function Dashboard() {
 
         {/* Motivational Quote */}
         <div className="mt-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-3xl p-8 text-center">
-          <div className="text-5xl mb-4">
-            {progressPercentage === 100 ? '🎉' : progressPercentage > 75 ? '🔥' : progressPercentage > 50 ? '💪' : '🚀'}
-          </div>
+          <EncouragementIcon size={38} className="mx-auto mb-4" />
           <p className="text-2xl font-bold text-gray-900">
             {progressPercentage === 100
               ? 'Congratulations! You\'ve completed your roadmap!'

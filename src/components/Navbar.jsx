@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect, useRef } from 'react';
+import { Award, ChartNoAxesColumnIncreasing, Compass, House, LogOut, Map, NotebookPen } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
@@ -23,15 +24,17 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-gradient-to-r from-purple-900 via-indigo-900 to-blue-900 border-b border-white/10 sticky top-0 z-50 backdrop-blur-lg shadow-lg">
+    <nav className="sticky top-0 z-50 border-b border-[#dce4de] bg-[#f4f6f2]/95 shadow-sm backdrop-blur-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="text-3xl group-hover:scale-110 transition-transform">🚀</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#e6f0e9] text-[#1f5747] transition-transform group-hover:scale-105">
+              <Compass size={22} />
+            </div>
             <div>
-              <div className="text-xl font-bold text-white">SkillMap</div>
-              <div className="text-[10px] text-white/70">AI Career Roadmap</div>
+              <div className="text-xl font-bold text-[#172923]">SkillMap</div>
+              <div className="text-[10px] text-[#718078]">AI Career Roadmap</div>
             </div>
           </Link>
 
@@ -40,13 +43,9 @@ export default function Navbar() {
             {/* Home - Always visible */}
             <Link
               to="/"
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                isActive('/') 
-                  ? 'bg-white text-purple-900 shadow-md' 
-                  : 'text-white hover:bg-white/10'
-              }`}
+              className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive('/') ? 'bg-[#e6f0e9] text-[#1f5747]' : 'text-[#53645a] hover:bg-[#e6f0e9] hover:text-[#1f5747]'}`}
             >
-              🏠 Home
+              <House size={16} />Home
             </Link>
 
             {currentUser ? (
@@ -54,67 +53,51 @@ export default function Navbar() {
                 {/* Authenticated user links */}
                 <Link
                   to="/quiz"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                    isActive('/quiz') 
-                      ? 'bg-white text-purple-900 shadow-md' 
-                      : 'text-white hover:bg-white/10'
-                  }`}
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive('/quiz') ? 'bg-[#e6f0e9] text-[#1f5747]' : 'text-[#53645a] hover:bg-[#e6f0e9] hover:text-[#1f5747]'}`}
                 >
-                  📝 Quiz
+                  <NotebookPen size={16} />Quiz
                 </Link>
                 
                 <Link
                   to="/roadmap"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                    isActive('/roadmap') 
-                      ? 'bg-white text-purple-900 shadow-md' 
-                      : 'text-white hover:bg-white/10'
-                  }`}
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive('/roadmap') ? 'bg-[#e6f0e9] text-[#1f5747]' : 'text-[#53645a] hover:bg-[#e6f0e9] hover:text-[#1f5747]'}`}
                 >
-                  🗺️ Roadmap
+                  <Map size={16} />Roadmap
                 </Link>
                 
                 <Link
                   to="/dashboard"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                    isActive('/dashboard') 
-                      ? 'bg-white text-purple-900 shadow-md' 
-                      : 'text-white hover:bg-white/10'
-                  }`}
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive('/dashboard') ? 'bg-[#e6f0e9] text-[#1f5747]' : 'text-[#53645a] hover:bg-[#e6f0e9] hover:text-[#1f5747]'}`}
                 >
-                  📊 Dashboard
+                  <ChartNoAxesColumnIncreasing size={16} />Dashboard
                 </Link>
                 
                 <Link
                   to="/certifications"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                    isActive('/certifications') 
-                      ? 'bg-white text-purple-900 shadow-md' 
-                      : 'text-white hover:bg-white/10'
-                  }`}
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive('/certifications') ? 'bg-[#e6f0e9] text-[#1f5747]' : 'text-[#53645a] hover:bg-[#e6f0e9] hover:text-[#1f5747]'}`}
                 >
-                  🏆 Certifications
+                  <Award size={16} />Certifications
                 </Link>
 
                 {/* User Profile Dropdown */}
                 <div className="relative ml-2" ref={dropdownRef}>
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-all"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 transition-all hover:bg-[#e6f0e9]"
                   >
                     <img
                       src={currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.email}&background=random`}
                       alt={currentUser.displayName || 'User'}
-                      className="w-8 h-8 rounded-full border-2 border-white/50"
+                      className="h-8 w-8 rounded-full border-2 border-[#c8d9cc]"
                     />
-                    <span className="text-white text-sm font-medium hidden md:block">
+                    <span className="hidden text-sm font-medium text-[#263b32] md:block">
                       {currentUser.displayName?.split(' ')[0] || 'User'}
                     </span>
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
-                      <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+                    <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-md border border-[#dce4de] bg-white shadow-xl">
+                      <div className="border-b border-[#dce4de] bg-[#f3f6f3] p-4">
                         <p className="font-bold text-gray-800 truncate">
                           {currentUser.displayName || 'User'}
                         </p>
@@ -127,9 +110,9 @@ export default function Navbar() {
                           logout();
                           setShowDropdown(false);
                         }}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors flex items-center gap-2 text-gray-700 font-medium"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left font-medium text-[#3e5147] transition-colors hover:bg-[#f3f6f3]"
                       >
-                        <span>🚪</span>
+                        <LogOut size={16} />
                         <span>Logout</span>
                       </button>
                     </div>
@@ -140,7 +123,7 @@ export default function Navbar() {
               /* Unauthenticated - Show Login button */
               <Link
                 to="/login"
-                className="ml-2 px-6 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-lg font-bold hover:shadow-lg hover:scale-105 transition-all text-sm"
+                className="ml-2 rounded-md bg-[#1f5747] px-6 py-2 text-sm font-bold text-white transition-all hover:bg-[#174638]"
               >
                 Login
               </Link>

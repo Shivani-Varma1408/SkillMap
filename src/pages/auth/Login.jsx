@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { CircleAlert, Info, Rocket } from 'lucide-react';
 
 
 
@@ -37,7 +38,7 @@ export default function Login() {
         createdAt: new Date(),
         quizAnswers: roadmapData.quizAnswers || {}
       });
-      console.log('✅ Roadmap saved after login');
+      console.log('Roadmap saved after login');
     } catch (error) {
       console.error('Error saving roadmap:', error);
     }
@@ -71,12 +72,12 @@ export default function Login() {
     
     // Validation
     if (!email || !password) {
-      setLocalError('⚠️ Please enter both email and password.');
+      setLocalError('Please enter both email and password.');
       return;
     }
 
     if (!email.includes('@')) {
-      setLocalError('⚠️ Please enter a valid email address.');
+      setLocalError('Please enter a valid email address.');
       return;
     }
 
@@ -89,17 +90,17 @@ export default function Login() {
     } catch (error) {
       // Enhanced error messages
       if (error.code === 'auth/user-not-found') {
-        setLocalError('❌ No account found with this email. Please sign up first.');
+        setLocalError('No account found with this email. Please sign up first.');
       } else if (error.code === 'auth/wrong-password') {
-        setLocalError('❌ Incorrect password. Please try again.');
+        setLocalError('Incorrect password. Please try again.');
       } else if (error.code === 'auth/invalid-email') {
-        setLocalError('❌ Invalid email address format.');
+        setLocalError('Invalid email address format.');
       } else if (error.code === 'auth/too-many-requests') {
-        setLocalError('⚠️ Too many failed attempts. Please try again later or reset your password.');
+        setLocalError('Too many failed attempts. Please try again later or reset your password.');
       } else if (error.code === 'auth/invalid-credential') {
-        setLocalError('❌ Invalid email or password. Please check your credentials.');
+        setLocalError('Invalid email or password. Please check your credentials.');
       } else {
-        setLocalError('❌ Sign-in failed. Please try again.');
+        setLocalError('Sign-in failed. Please try again.');
       }
       console.error('Email sign-in error:', error);
     } finally {
@@ -112,7 +113,7 @@ export default function Login() {
       <div className="max-w-md w-full">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <div className="text-7xl mb-4 animate-bounce">🚀</div>
+          <div className="mb-4 flex justify-center text-[#1f5747]"><Rocket size={52} strokeWidth={1.6} /></div>
           <h1 className="text-5xl font-bold text-white mb-2">SkillMap</h1>
           <p className="text-xl text-white/90">AI Career Roadmap</p>
         </div>
@@ -129,8 +130,8 @@ export default function Login() {
           {/* Show message if coming from roadmap */}
           {roadmapData && (
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <p className="text-blue-700 text-sm flex items-center gap-2">
-                <span>ℹ️</span>
+              <p className="flex items-center gap-2 text-sm text-blue-700">
+                <Info size={17} className="shrink-0" />
                 <span>Sign in to save your <strong>{roadmapData.career || roadmapData.selectedCareer?.title}</strong> roadmap</span>
               </p>
             </div>
@@ -139,7 +140,7 @@ export default function Login() {
           {/* Error Message */}
           {(localError || error) && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-red-600 text-sm">{localError || error}</p>
+              <p className="flex items-center gap-2 text-sm text-red-600"><CircleAlert size={17} className="shrink-0" />{localError || error}</p>
             </div>
           )}
 

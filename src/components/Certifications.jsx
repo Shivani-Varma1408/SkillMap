@@ -1,3 +1,5 @@
+import { CircleCheck } from 'lucide-react';
+
 export default function Certifications({ careerPath, missingSkills, quizResults }) {
   return (
     <div>
@@ -24,7 +26,7 @@ export default function Certifications({ careerPath, missingSkills, quizResults 
           ))}
         </div>
       ) : (
-        <p className="text-gray-600">No missing skills found 🎉</p>
+        <p className="flex items-center gap-2 text-gray-600"><CircleCheck size={18} className="text-[#28725b]" />No missing skills found</p>
       )}
     </div>
   );

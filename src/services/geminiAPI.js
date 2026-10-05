@@ -104,7 +104,7 @@ export const generateCertifications = async (skills, careerPath, quizData) => {
     const result = await model.generateContent(prompt);
     return JSON.parse(result.response.text());
   } catch (error) {
-    console.error('❌ Certification Generation Error:', error);
+    console.error('Certification Generation Error:', error);
     // Return fallback certifications if API fails
     return getFallbackCertifications(skills, careerPath);
   }
@@ -188,7 +188,7 @@ export const generateCareerSuggestions = async (quizAnswers) => {
     const result = await model.generateContent(prompt);
     return JSON.parse(result.response.text());
   } catch (error) {
-    console.error('❌ Career Suggestion Error:', error);
+    console.error('Career Suggestion Error:', error);
     throw error;
   }
 };
@@ -257,7 +257,7 @@ export const generateLearningRoadmap = async ({ careerTitle, currentSkills, curr
     // Validate and sanitize the response
     return sanitizeRoadmapResponse(response);
   } catch (error) {
-    console.error('❌ Roadmap Generation Error:', error);
+    console.error('Roadmap Generation Error:', error);
     throw error;
   }
 };

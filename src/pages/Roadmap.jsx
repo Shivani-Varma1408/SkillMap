@@ -1,9 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { createElement } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { generateCareerSuggestions, generateLearningRoadmap } from '../services/geminiAPI';
 import { useAuth } from '../context/AuthContext';
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  Check,
+  Code2,
+  Medal,
+  Printer,
+  RefreshCw,
+  Rocket,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from 'lucide-react';
 
 export default function Roadmap() {
   const location = useLocation();
@@ -24,10 +40,10 @@ export default function Roadmap() {
     const answers = location.state?.answers;
     
     if (answers) {
-      console.log('✅ Quiz answers from navigation state');
+      console.log('Quiz answers from navigation state');
       fetchSuggestions(answers);
     } else {
-      console.log('⚠️ No quiz answers, loading existing roadmap');
+      console.log('No quiz answers, loading existing roadmap');
       loadExistingRoadmap();
     }
   }, [location.state, currentUser]);
@@ -85,7 +101,7 @@ export default function Roadmap() {
       let savedRoadmapId = null;
       try {
         const docRef = await addDoc(collection(db, 'roadmaps'), {
-          userId: currentUser.uid, // ✅ CRITICAL: Associate roadmap with user
+          userId: currentUser.uid, // Associate roadmap with user
           career: selectedCareer.title,
           roadmap: data,
           missingSkills: extractedSkills,
@@ -94,7 +110,7 @@ export default function Roadmap() {
         });
         savedRoadmapId = docRef.id;
         setFirebaseRoadmapId(savedRoadmapId);
-        console.log('✅ Roadmap saved to Firebase for user:', currentUser.uid, 'ID:', savedRoadmapId);
+        console.log('Roadmap saved to Firebase for user:', currentUser.uid, 'ID:', savedRoadmapId);
       } catch (e) { 
         console.error("Firebase save failed", e);
         alert("Failed to save roadmap. Please try again.");
@@ -191,9 +207,9 @@ export default function Roadmap() {
         setMissingSkills(roadmapDoc.missingSkills || []);
         setStep('roadmap');
         
-        console.log('✅ Loaded existing roadmap:', roadmapDoc.career);
+        console.log('Loaded existing roadmap:', roadmapDoc.career);
       } else {
-        console.log('📭 No roadmaps found, redirecting to quiz');
+        console.log('No roadmaps found, redirecting to quiz');
         navigate('/quiz');
       }
     } catch (error) {
@@ -265,7 +281,7 @@ export default function Roadmap() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <div className="text-6xl mb-4">🎯</div>
+            <Target size={42} className="mx-auto mb-4 text-[#28725b]" />
             <h1 className="text-4xl font-bold text-white mb-4">Choose Your Career Path</h1>
             <p className="text-xl text-white/90">Based on your quiz results, here are the best matches</p>
           </div>
@@ -278,7 +294,7 @@ export default function Roadmap() {
                 onClick={() => handleCareerSelect(career)}
               >
                 <div className="mb-4">
-                  <div className="text-4xl mb-3">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐'}</div>
+                  <div className="mb-3 text-[#28725b]">{createElement(i === 0 ? Trophy : i < 3 ? Medal : Star, { size: 30, className: i === 0 ? 'text-[#a88a40]' : '' })}</div>
                   <h2 className="text-2xl font-bold text-purple-700 mb-2">{career.title}</h2>
                   <p className="text-gray-600 mb-4">{career.description}</p>
                 </div>
@@ -302,7 +318,7 @@ export default function Roadmap() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl max-w-md w-full shadow-2xl">
           <div className="text-center mb-6">
-            <div className="text-4xl mb-3">🚀</div>
+            <Rocket size={34} className="mx-auto mb-3 text-[#28725b]" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Personalize Your Roadmap</h2>
             <p className="text-gray-600">Help us create the perfect learning path for you</p>
           </div>
@@ -340,7 +356,7 @@ export default function Roadmap() {
               onClick={handleGenerateRoadmap} 
               className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-xl transition-all mt-6"
             >
-              Generate Personalized Roadmap 🚀
+              Generate Personalized Roadmap <ArrowRight size={18} className="ml-2 inline" />
             </button>
           </div>
         </div>
@@ -355,7 +371,7 @@ export default function Roadmap() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-10">
-            <div className="text-6xl mb-4">🎯</div>
+            <Target size={42} className="mx-auto mb-4 text-[#28725b]" />
             <h1 className="text-4xl font-bold text-gray-800 mb-3">{selectedCareer.title} Roadmap</h1>
             <p className="text-gray-600 text-lg">Your personalized {roadmap.roadmap?.length || 6}-month learning journey</p>
           </div>
@@ -383,14 +399,14 @@ export default function Roadmap() {
                       <h3 className="text-xl font-bold text-gray-800 mb-2">{m.title || `Month ${m.month || i + 1}`}</h3>
                       <p className="text-gray-600">{focusText}</p>
                     </div>
-                    <div className="text-3xl">{i === 0 ? '📚' : i === 1 ? '💻' : i === 2 ? '⚡' : '🚀'}</div>
+                    <div className="text-[#28725b]">{createElement([BookOpen, Code2, Zap, Rocket][Math.min(i, 3)], { size: 27 })}</div>
                   </div>
                   
                   {/* Skills Section */}
                   {m.skills && m.skills.length > 0 && (
                     <div className="mt-4">
                       <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <span className="text-lg">🎯</span> Skills to Learn
+                        <Target size={18} className="text-[#28725b]" />Skills to Learn
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {m.skills.map((skill, idx) => {
@@ -418,7 +434,7 @@ export default function Roadmap() {
                   {m.projects && m.projects.length > 0 && (
                     <div className="mt-4">
                       <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <span className="text-lg">💻</span> Projects
+                        <Code2 size={18} className="text-[#28725b]" />Projects
                       </h4>
                       <ul className="space-y-2">
                         {m.projects.map((project, idx) => {
@@ -447,7 +463,7 @@ export default function Roadmap() {
                   {m.resources && m.resources.length > 0 && (
                     <div className="mt-4">
                       <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <span className="text-lg">📖</span> Resources
+                        <BookOpen size={18} className="text-[#28725b]" />Resources
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {m.resources.map((resource, idx) => {
@@ -490,7 +506,7 @@ export default function Roadmap() {
               onClick={navigateToCertifications}
               className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-bold hover:shadow-xl transition-all"
             >
-              🏆 Get Recommended Certifications
+              <Award size={19} className="mr-2 inline" />Get Recommended Certifications
             </button>
             
             <button 
@@ -505,13 +521,13 @@ export default function Roadmap() {
                 onClick={() => window.print()}
                 className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-colors"
               >
-                📄 Print Roadmap
+                <Printer size={17} className="mr-2 inline" />Print Roadmap
               </button>
               <button 
                 onClick={() => navigate('/quiz')}
                 className="flex-1 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold hover:bg-blue-200 transition-colors"
               >
-                🔄 Take Quiz Again
+                <RefreshCw size={17} className="mr-2 inline" />Take Quiz Again
               </button>
             </div>
           </div>

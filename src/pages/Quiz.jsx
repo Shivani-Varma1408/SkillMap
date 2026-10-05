@@ -1,104 +1,145 @@
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Bot,
+  Boxes,
+  BriefcaseBusiness,
+  Building2,
+  ChartNoAxesColumnIncreasing,
+  Cloud,
+  Code2,
+  Cpu,
+  FileText,
+  FlaskConical,
+  Globe,
+  GraduationCap,
+  Handshake,
+  Hash,
+  Headphones,
+  Heart,
+  Image,
+  Landmark,
+  Lightbulb,
+  Map,
+  MessagesSquare,
+  Microscope,
+  Palette,
+  Puzzle,
+  Rocket,
+  Scale,
+  Settings,
+  SlidersHorizontal,
+  Smartphone,
+  Sparkles,
+  Sprout,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react';
 
 const quizQuestions = [
   {
     id: 1,
     question: "What interests you most in tech?",
-    emoji: "🎯",
+    icon: Target,
     options: [
-      { text: "Building apps and websites", icon: "💻" },
-      { text: "Analyzing data and finding patterns", icon: "📊" },
-      { text: "Designing beautiful user experiences", icon: "🎨" },
-      { text: "Solving complex algorithmic problems", icon: "🧩" },
-      { text: "Managing teams and projects", icon: "👥" }
+      { text: "Building apps and websites", icon: Code2 },
+      { text: "Analyzing data and finding patterns", icon: ChartNoAxesColumnIncreasing },
+      { text: "Designing beautiful user experiences", icon: Palette },
+      { text: "Solving complex algorithmic problems", icon: Puzzle },
+      { text: "Managing teams and projects", icon: Users }
     ]
   },
   {
     id: 2,
     question: "What's your ideal work style?",
-    emoji: "💼",
+    icon: BriefcaseBusiness,
     options: [
-      { text: "Deep focus, independent work", icon: "🎧" },
-      { text: "Collaborative team projects", icon: "🤝" },
-      { text: "Mix of both collaboration and solo work", icon: "⚖️" },
-      { text: "Client-facing, lots of communication", icon: "🗣️" },
-      { text: "Remote and flexible schedule", icon: "🌍" }
+      { text: "Deep focus, independent work", icon: Headphones },
+      { text: "Collaborative team projects", icon: Handshake },
+      { text: "Mix of both collaboration and solo work", icon: Scale },
+      { text: "Client-facing, lots of communication", icon: MessagesSquare },
+      { text: "Remote and flexible schedule", icon: Globe }
     ]
   },
   {
     id: 3,
     question: "Technical or Creative?",
-    emoji: "🎭",
+    icon: SlidersHorizontal,
     options: [
-      { text: "Very technical - love logic and systems", icon: "⚙️" },
-      { text: "Very creative - love design and aesthetics", icon: "🎨" },
-      { text: "Perfect balance of both", icon: "🌈" },
-      { text: "Technical with creative problem-solving", icon: "🔬" },
-      { text: "Creative with technical implementation", icon: "✨" }
+      { text: "Very technical - love logic and systems", icon: Settings },
+      { text: "Very creative - love design and aesthetics", icon: Palette },
+      { text: "Perfect balance of both", icon: SlidersHorizontal },
+      { text: "Technical with creative problem-solving", icon: Microscope },
+      { text: "Creative with technical implementation", icon: Sparkles }
     ]
   },
   {
     id: 4,
     question: "Which subjects did you enjoy most?",
-    emoji: "📚",
+    icon: BookOpen,
     options: [
-      { text: "Math and Logic", icon: "🔢" },
-      { text: "Art and Design", icon: "🖼️" },
-      { text: "Science and Research", icon: "🔬" },
-      { text: "Business and Communication", icon: "💼" },
-      { text: "Technology and Engineering", icon: "🛠️" }
+      { text: "Math and Logic", icon: Hash },
+      { text: "Art and Design", icon: Image },
+      { text: "Science and Research", icon: FlaskConical },
+      { text: "Business and Communication", icon: BriefcaseBusiness },
+      { text: "Technology and Engineering", icon: Cpu }
     ]
   },
   {
     id: 5,
     question: "Current coding experience?",
-    emoji: "👨‍💻",
+    icon: Code2,
     options: [
-      { text: "Complete beginner", icon: "🌱" },
-      { text: "Basic HTML/CSS", icon: "📝" },
-      { text: "Some programming experience", icon: "🚀" },
-      { text: "Comfortable with multiple languages", icon: "💪" },
-      { text: "Advanced developer", icon: "🏆" }
+      { text: "Complete beginner", icon: Sprout },
+      { text: "Basic HTML/CSS", icon: FileText },
+      { text: "Some programming experience", icon: Rocket },
+      { text: "Comfortable with multiple languages", icon: Code2 },
+      { text: "Advanced developer", icon: Trophy }
     ]
   },
   {
     id: 6,
     question: "What problems excite you?",
-    emoji: "💡",
+    icon: Lightbulb,
     options: [
-      { text: "Making interfaces beautiful and intuitive", icon: "✨" },
-      { text: "Optimizing performance and efficiency", icon: "⚡" },
-      { text: "Understanding user needs and behavior", icon: "🧠" },
-      { text: "Working with big data and patterns", icon: "📈" },
-      { text: "Building scalable systems", icon: "🏗️" }
+      { text: "Making interfaces beautiful and intuitive", icon: Sparkles },
+      { text: "Optimizing performance and efficiency", icon: Zap },
+      { text: "Understanding user needs and behavior", icon: Users },
+      { text: "Working with big data and patterns", icon: TrendingUp },
+      { text: "Building scalable systems", icon: Boxes }
     ]
   },
   {
     id: 7,
     question: "Dream work environment?",
-    emoji: "🏢",
+    icon: Building2,
     options: [
-      { text: "Startup - fast-paced, innovative", icon: "🚀" },
-      { text: "Big Tech - structured, great resources", icon: "🏛️" },
-      { text: "Freelance - independent, flexible", icon: "🌴" },
-      { text: "Agency - variety of projects", icon: "🎪" },
-      { text: "Non-profit - mission-driven", icon: "❤️" }
+      { text: "Startup - fast-paced, innovative", icon: Rocket },
+      { text: "Big Tech - structured, great resources", icon: Landmark },
+      { text: "Freelance - independent, flexible", icon: Globe },
+      { text: "Agency - variety of projects", icon: Building2 },
+      { text: "Non-profit - mission-driven", icon: Heart }
     ]
   },
   {
     id: 8,
     question: "Which skill sounds most exciting?",
-    emoji: "🎓",
+    icon: GraduationCap,
     options: [
-      { text: "Mastering programming languages", icon: "💻" },
-      { text: "Design tools (Figma, Adobe XD)", icon: "🎨" },
-      { text: "Data science and ML", icon: "🤖" },
-      { text: "Cloud computing (AWS, Azure)", icon: "☁️" },
-      { text: "Product management", icon: "📱" }
+      { text: "Mastering programming languages", icon: Code2 },
+      { text: "Design tools (Figma, Adobe XD)", icon: Palette },
+      { text: "Data science and ML", icon: Bot },
+      { text: "Cloud computing (AWS, Azure)", icon: Cloud },
+      { text: "Product management", icon: Smartphone }
     ]
   }
 ];
@@ -139,7 +180,7 @@ export default function Quiz() {
       let quizId = 'temp-' + Date.now();
       
       try {
-        // ✅ Save directly to Firestore with user association
+        // Save directly to Firestore with user association
         const docRef = await addDoc(collection(db, 'quizResults'), {
           userId: currentUser?.uid || 'anonymous',
           userEmail: currentUser?.email || 'anonymous',
@@ -148,13 +189,13 @@ export default function Quiz() {
           completed: true
         });
         quizId = docRef.id;
-        console.log('✅ Quiz saved to Firestore with ID:', quizId);
+        console.log('Quiz saved to Firestore with ID:', quizId);
       } catch (fbError) {
-        console.warn('⚠️ Firestore save failed, using temp ID:', fbError);
+        console.warn('Firestore save failed, using temp ID:', fbError);
         quizId = 'temp-' + Date.now();
       }
 
-      // ✅ Navigate with quiz data (Firestore is source of truth)
+      // Navigate with quiz data (Firestore is source of truth)
       setTimeout(() => {
         navigate('/roadmap', { 
           state: { 
@@ -166,7 +207,7 @@ export default function Quiz() {
       }, 1500);
 
     } catch (error) {
-      console.error('❌ Error in quiz submission:', error);
+      console.error('Error in quiz submission:', error);
       
       // Fallback navigation with temp data
       setTimeout(() => {
@@ -190,7 +231,7 @@ export default function Quiz() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full text-center space-y-8 animate-fade-in">
-          <div className="text-8xl mb-8 animate-bounce">🚀</div>
+          <div className="mb-8 flex justify-center text-[#1f5747]"><Rocket size={56} strokeWidth={1.6} /></div>
           <h1 className="text-6xl font-bold text-white mb-4">
             Find Your Perfect
             <br />
@@ -205,17 +246,17 @@ export default function Quiz() {
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div className="text-center">
-                <div className="text-4xl mb-2">⚡</div>
+                <Zap size={28} className="mx-auto mb-2 text-[#28725b]" />
                 <div className="text-white font-semibold">2 Minutes</div>
                 <div className="text-white/70 text-sm">Quick & Easy</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl mb-2">🎯</div>
+                <Target size={28} className="mx-auto mb-2 text-[#28725b]" />
                 <div className="text-white font-semibold">AI-Powered</div>
                 <div className="text-white/70 text-sm">Personalized Results</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl mb-2">🗺️</div>
+                <Map size={28} className="mx-auto mb-2 text-[#28725b]" />
                 <div className="text-white font-semibold">Get Roadmap</div>
                 <div className="text-white/70 text-sm">Step by Step</div>
               </div>
@@ -225,7 +266,7 @@ export default function Quiz() {
               onClick={() => setShowWelcome(false)}
               className="w-full py-4 px-8 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-bold text-xl hover:scale-105 transform transition-all shadow-2xl hover:shadow-yellow-500/50"
             >
-              Start Your Journey →
+              Start Your Journey <ArrowRight size={19} className="ml-2 inline" />
             </button>
           </div>
 
@@ -245,7 +286,7 @@ export default function Quiz() {
             <div className="w-32 h-32 border-8 border-white/20 rounded-full"></div>
             <div className="w-32 h-32 border-8 border-t-yellow-400 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin absolute top-0 left-0"></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-5xl">
-              🤖
+              <Bot size={34} className="text-[#28725b]" />
             </div>
           </div>
           <div className="space-y-2">
@@ -270,7 +311,7 @@ export default function Quiz() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4 animate-bounce">{question.emoji}</div>
+          <div className="mb-4 flex justify-center text-[#1f5747]">{createElement(question.icon, { size: 40, strokeWidth: 1.7 })}</div>
           <div className="text-white/80 text-sm mb-2">
             Question {currentQuestion + 1} of {quizQuestions.length}
           </div>
@@ -304,17 +345,15 @@ export default function Quiz() {
                 className="w-full text-left p-5 rounded-2xl border-3 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all duration-200 group hover:scale-105 transform hover:shadow-lg"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-4xl group-hover:scale-125 transition-transform">
-                    {option.icon}
+                  <span className="text-[#28725b] transition-transform group-hover:scale-110">
+                    {createElement(option.icon, { size: 26, strokeWidth: 1.8 })}
                   </span>
                   <div className="flex-1">
                     <span className="text-lg text-gray-700 group-hover:text-purple-700 font-medium">
                       {option.text}
                     </span>
                   </div>
-                  <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-                    →
-                  </span>
+                  <ArrowRight size={20} className="opacity-0 transition-opacity group-hover:opacity-100" />
                 </div>
               </button>
             ))}
@@ -325,7 +364,7 @@ export default function Quiz() {
               onClick={handleBack}
               className="mt-6 text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-2 group"
             >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span>
+              <ArrowLeft size={17} className="transition-transform group-hover:-translate-x-1" />
               Back to previous question
             </button>
           )}
@@ -333,7 +372,7 @@ export default function Quiz() {
 
         {/* Help Text */}
         <p className="text-center text-white/80 text-sm">
-          💡 No wrong answers - just be honest about your interests!
+          No wrong answers. Just be honest about your interests.
         </p>
       </div>
     </div>

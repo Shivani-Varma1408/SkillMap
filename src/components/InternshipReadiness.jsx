@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { CircleCheck, Target } from "lucide-react";
 
 // Function to calculate readiness based on completed skills/projects
 export function calculateReadiness(progress, roadmap) {
@@ -135,7 +136,8 @@ export default function InternshipReadiness({ userId, roadmap }) {
   return (
     <div className="internship-readiness p-6 bg-white rounded-xl shadow-md max-w-md mx-auto mt-6">
       <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-        🎯 Internship Readiness
+        <Target size={20} className="text-[#28725b]" />
+        Internship Readiness
       </h3>
 
       <div className="flex flex-col items-center justify-center mb-6">
@@ -149,7 +151,7 @@ export default function InternshipReadiness({ userId, roadmap }) {
 
       {status === "Ready" && (
         <div className="action-panel mt-4 p-4 bg-green-50 rounded-lg text-center border border-green-200">
-          <h4 className="font-semibold mb-3 text-green-800">🎉 You're ready to apply!</h4>
+          <h4 className="mb-3 flex items-center justify-center gap-2 font-semibold text-green-800"><CircleCheck size={18} />You're ready to apply!</h4>
           <button className="px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm hover:shadow">
             View Internship Opportunities
           </button>

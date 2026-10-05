@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setError(null);
     try {
-      // ✅ Clear all browser storage before logout
+      // Clear all browser storage before logout
       sessionStorage.clear();
       localStorage.clear();
       
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
 
       await signOut(auth);
       
-      console.log('✅ User logged out and storage cleared');
+      console.log('User logged out and storage cleared');
     } catch (error) {
       console.error('Logout error:', error);
       setError(error.message);

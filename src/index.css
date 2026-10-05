@@ -1,4 +1,97 @@
 @import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --color-purple-50: #f3f6f3;
+  --color-purple-100: #e6f0e9;
+  --color-purple-200: #dce4de;
+  --color-purple-300: #c8d9cc;
+  --color-purple-400: #7aa48f;
+  --color-purple-500: #28725b;
+  --color-purple-600: #1f5747;
+  --color-purple-700: #174638;
+  --color-purple-800: #1d493d;
+  --color-purple-900: #172923;
+  --color-indigo-50: #f3f6f3;
+  --color-indigo-100: #e6f0e9;
+  --color-indigo-200: #dce4de;
+  --color-indigo-300: #c8d9cc;
+  --color-indigo-400: #7aa48f;
+  --color-indigo-500: #28725b;
+  --color-indigo-600: #1f5747;
+  --color-indigo-700: #174638;
+  --color-indigo-800: #1d493d;
+  --color-indigo-900: #172923;
+  --color-blue-50: #f3f6f3;
+  --color-blue-100: #e6f0e9;
+  --color-blue-200: #dce4de;
+  --color-blue-300: #c8d9cc;
+  --color-blue-400: #7aa48f;
+  --color-blue-500: #28725b;
+  --color-blue-600: #1f5747;
+  --color-blue-700: #174638;
+  --color-blue-800: #1d493d;
+  --color-blue-900: #172923;
+  --color-pink-50: #f3f6f3;
+  --color-pink-100: #e6f0e9;
+  --color-pink-200: #dce4de;
+  --color-pink-300: #c8d9cc;
+  --color-pink-400: #7aa48f;
+  --color-pink-500: #28725b;
+  --color-pink-600: #1f5747;
+  --color-pink-700: #174638;
+  --color-pink-800: #1d493d;
+  --color-pink-900: #172923;
+  --color-gray-50: #f4f6f2;
+  --color-gray-100: #edf1ed;
+  --color-gray-200: #dce4de;
+  --color-gray-300: #cbd4ce;
+  --color-gray-400: #a5b0a9;
+  --color-gray-500: #718078;
+  --color-gray-600: #58665f;
+  --color-gray-700: #3e5147;
+  --color-gray-800: #263b32;
+  --color-gray-900: #172923;
+  --color-yellow-50: #fbf7eb;
+  --color-yellow-100: #f8efdc;
+  --color-yellow-200: #f0e3bd;
+  --color-yellow-300: #eadba8;
+  --color-yellow-400: #e3c77c;
+  --color-yellow-500: #c3a756;
+  --color-yellow-600: #a88a40;
+  --color-yellow-700: #8a6725;
+  --color-yellow-800: #6c5124;
+  --color-yellow-900: #4c3d20;
+  --color-orange-50: #fbf7eb;
+  --color-orange-100: #f8efdc;
+  --color-orange-200: #f0e3bd;
+  --color-orange-300: #eadba8;
+  --color-orange-400: #e3c77c;
+  --color-orange-500: #c3a756;
+  --color-orange-600: #a88a40;
+  --color-orange-700: #8a6725;
+  --color-orange-800: #6c5124;
+  --color-orange-900: #4c3d20;
+}
+
+body {
+  background: #f4f6f2;
+  color: #172923;
+}
+
+div.min-h-screen[class*="bg-gradient-to-br"] {
+  background-image: linear-gradient(135deg, #f4f6f2 0%, #edf2ed 100%) !important;
+  color: #172923;
+}
+
+div.min-h-screen[class*="bg-gradient-to-br"] [class*="text-white"]:not(button *):not(a *) {
+  color: #172923 !important;
+}
+
+div.min-h-screen[class*="bg-gradient-to-br"] button[class*="text-white"],
+div.min-h-screen[class*="bg-gradient-to-br"] a[class*="text-white"] {
+  color: #fff !important;
+}
 /* Custom Animations */
 @keyframes fade-in {
   from {
@@ -84,20 +177,26 @@ html {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: #e9eee9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #a855f7, #ec4899);
-  border-radius: 6px;
+  background: #7aa48f;
+  border: 2px solid #e9eee9;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #9333ea, #db2777);
+  background: #1f5747;
+}
+
+* {
+  scrollbar-color: #7aa48f #e9eee9;
+  scrollbar-width: thin;
 }
 
 /* Loading spinner */

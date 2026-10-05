@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { CircleAlert, Info, Rocket } from 'lucide-react';
 
 
 export default function Register() {
@@ -37,7 +38,7 @@ export default function Register() {
         createdAt: new Date(),
         quizAnswers: roadmapData.quizAnswers || {}
       });
-      console.log('✅ Roadmap saved after registration');
+      console.log('Roadmap saved after registration');
     } catch (error) {
       console.error('Error saving roadmap:', error);
     }
@@ -74,28 +75,28 @@ export default function Register() {
 
     // Validation
     if (!email || !password || !confirmPassword) {
-      setLocalError('⚠️ Please fill in all fields.');
+      setLocalError('Please fill in all fields.');
       return;
     }
 
     if (!email.includes('@')) {
-      setLocalError('⚠️ Please enter a valid email address.');
+      setLocalError('Please enter a valid email address.');
       return;
     }
 
     if (password.length < 6) {
-      setLocalError('⚠️ Password must be at least 6 characters long.');
+      setLocalError('Password must be at least 6 characters long.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setLocalError('❌ Passwords do not match. Please re-enter.');
+      setLocalError('Passwords do not match. Please re-enter.');
       return;
     }
 
     // Check password strength
     if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setLocalError('⚠️ Password should contain at least one uppercase letter and one number.');
+      setLocalError('Password should contain at least one uppercase letter and one number.');
       return;
     }
 
@@ -107,15 +108,15 @@ export default function Register() {
     } catch (error) {
       // Enhanced error messages
       if (error.code === 'auth/email-already-in-use') {
-        setLocalError('❌ This email is already registered. Please sign in instead or use a different email.');
+        setLocalError('This email is already registered. Please sign in instead or use a different email.');
       } else if (error.code === 'auth/weak-password') {
-        setLocalError('⚠️ Password is too weak. Use at least 6 characters with letters and numbers.');
+        setLocalError('Password is too weak. Use at least 6 characters with letters and numbers.');
       } else if (error.code === 'auth/invalid-email') {
-        setLocalError('❌ Invalid email address format.');
+        setLocalError('Invalid email address format.');
       } else if (error.code === 'auth/operation-not-allowed') {
-        setLocalError('❌ Email/password sign-up is currently disabled. Please use Google sign-in.');
+        setLocalError('Email/password sign-up is currently disabled. Please use Google sign-in.');
       } else {
-        setLocalError('❌ Failed to create account. Please try again.');
+        setLocalError('Failed to create account. Please try again.');
       }
       console.error('Sign-up error:', error);
     } finally {
@@ -128,7 +129,7 @@ export default function Register() {
       <div className="max-w-md w-full">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <div className="text-7xl mb-4 animate-bounce">🚀</div>
+          <div className="mb-4 flex justify-center text-[#1f5747]"><Rocket size={52} strokeWidth={1.6} /></div>
           <h1 className="text-5xl font-bold text-white mb-2">SkillMap</h1>
           <p className="text-xl text-white/90">AI Career Roadmap</p>
         </div>
@@ -145,8 +146,8 @@ export default function Register() {
           {/* Show message if coming from roadmap */}
           {roadmapData && (
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <p className="text-blue-700 text-sm flex items-center gap-2">
-                <span>ℹ️</span>
+              <p className="flex items-center gap-2 text-sm text-blue-700">
+                <Info size={17} className="shrink-0" />
                 <span>Create an account to save your <strong>{roadmapData.career || roadmapData.selectedCareer?.title}</strong> roadmap</span>
               </p>
             </div>
@@ -155,7 +156,7 @@ export default function Register() {
           {/* Error Message */}
           {(localError || error) && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-red-600 text-sm">{localError || error}</p>
+              <p className="flex items-center gap-2 text-sm text-red-600"><CircleAlert size={17} className="shrink-0" />{localError || error}</p>
             </div>
           )}
 
